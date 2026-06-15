@@ -1,0 +1,108 @@
+---
+title: "Navigate the Dáva Analytics Dashboard and KPI Cards"
+sidebarTitle: "Analytics"
+description: "Explore every panel of the Dáva dashboard — KPI cards, traffic breakdowns, UTM attribution, bot filtering, and CSV export, refreshed every 30 seconds."
+---
+
+The Dáva dashboard brings all your redirect traffic, funnel metrics, and attribution breakdowns into one view. Every click through a Dáva redirect link appears in the dashboard within seconds, segmented by source, medium, campaign, geography, device, and more. Data across all panels refreshes automatically every 30 seconds — no manual reload required.
+
+## Overview (Hub)
+
+The top of the dashboard shows four KPI cards that give you an at-a-glance health check for your traffic and funnel. Each card covers the currently selected date range and domain filter.
+
+<CardGroup cols={2}>
+  <Card title="Total Visits" icon="arrow-pointer" href="/tracking/analytics-dashboard#traffic-breakdowns">
+    The count of clean redirect hits — every click through a Dáva link, with known bots and scanners already excluded. This number does not require the snippet; it is recorded server-side the moment a visitor clicks your link.
+  </Card>
+  <Card title="Cold Leads" icon="snowflake" href="/tracking/snippet">
+    Distinct people who generated at least one pageview on your destination site, as recorded by the `t.js` snippet. Requires snippet installation.
+  </Card>
+  <Card title="Hot Leads" icon="fire" href="/tracking/conversion-funnel">
+    Distinct people who visited a page matching one of your configured warm patterns (e.g. `/pricing`, `/features`). A subset of Cold Leads.
+  </Card>
+  <Card title="Conversions" icon="circle-check" href="/tracking/conversion-funnel">
+    Distinct people who reached a conversion page or triggered a webhook conversion event. A subset of Hot Leads.
+  </Card>
+</CardGroup>
+
+Use the **Domain** selector and **Date Range** picker at the top of the page to filter all four cards together. Changes apply instantly across every panel on the page.
+
+## Traffic breakdowns
+
+Below the KPI cards, the breakdown tables let you slice your redirect traffic by any attribution dimension. Each table shows the segment value, visit count, and percentage of total. Click any row to drill into a narrower slice — for example, click a source row to see only the mediums within that source, then click a medium to see only the campaigns within it.
+
+| Tab | What it segments | Typical values |
+|---|---|---|
+| **Source** | `utm_source` | `email`, `facebook`, `google`, `direct` |
+| **Medium** | `utm_medium` | `paid`, `organic`, `newsletter`, `sms` |
+| **Campaign** | `utm_campaign` | `spring-sale`, `q1-promo`, `black-friday` |
+| **Content** | `utm_content` | `hero-image`, `cta-button`, `sidebar` |
+| **Geography** | Country (IP geolocation) | Australia, United States, United Kingdom |
+| **Device** | Device class | Desktop, Mobile, Tablet |
+| **Browser** | Browser name | Chrome, Safari, Firefox, Edge |
+| **Referrer** | Referring URL | Organic search, partner sites, direct |
+
+<Tip>
+  If you see large volumes landing in a segment labelled `(none)` or `(direct)`, it means those visits arrived without UTM parameters in the redirect URL. Use Dáva's link builder to add UTMs to every link you distribute, and those visits will show up in the correct segment immediately.
+</Tip>
+
+## Visits over time chart
+
+The time-series chart beneath the KPI cards plots redirect hits over your selected date range. Each point on the chart represents one time bucket (hourly for short ranges, daily for longer ones).
+
+- **Filter by UTM dimension** — click a row in any breakdown table to overlay only that segment's traffic on the chart. This lets you compare the shape of Facebook traffic versus email traffic across the same period.
+- **Hover** over any point for an exact count tooltip.
+- The chart and the breakdown tables always stay in sync — filtering one updates the other.
+
+## Domain-level view
+
+Click any domain tile or row to open its dedicated analytics view, which shows only the traffic and breakdowns for that domain. This is the right view when you are analysing a specific campaign or checking a particular landing page.
+
+<Note>
+  The funnel KPI cards (Cold Leads, Hot Leads, Conversions) are keyed to your **destination domain** — the site where the `t.js` snippet is installed. If you are viewing a Dáva redirect subdomain (e.g. `go.yourdomain.com`), you will see Total Visits but funnel stages will not populate. To see funnel data, open the analytics for the destination domain that has the snippet installed.
+</Note>
+
+## CSV export
+
+Export any table for further analysis in Google Sheets, Tableau, or your data warehouse.
+
+<Steps>
+  <Step title="Set your filters">
+    Choose the date range, domain, and any segment filters you want reflected in the export.
+  </Step>
+  <Step title="Click Export">
+    Click the **Export** button (or the download icon) in the top-right corner of any breakdown table.
+  </Step>
+  <Step title="Download the file">
+    Your browser downloads a CSV with columns for `segment_type`, `segment_value`, `visit_count`, `percentage`, and `date`. Import it directly into any spreadsheet or BI tool.
+  </Step>
+</Steps>
+
+## Bot and scanner filtering
+
+Dáva automatically identifies and excludes non-human traffic from your visit counts. Filtered categories include email security scanners, link previewers, crawlers, and traffic from known datacenter and bot networks. This means the Total Visits number you see already reflects real clicks from real browsers.
+
+To see the raw split between human and bot traffic, toggle **Show Bots** in the filter bar:
+
+- **Off (default)** — shows only clean human visits. Use this for all campaign performance decisions.
+- **On** — includes bot and scanner hits in all counts. Use this when troubleshooting unexpectedly low visit counts or auditing a specific link.
+
+The scanner filter is the same layer that protects your email campaign open-rate numbers from being inflated by email security tools that pre-fetch every link in every message before the recipient even opens it.
+
+## FAQ
+
+<Accordion title="How often is data refreshed?">
+  All panels on the dashboard auto-poll every 30 seconds. New redirect hits and snippet events appear within a few seconds of occurring; you do not need to reload the page manually. Batch exports (CSV) reflect data up to approximately one hour old due to caching at the export layer.
+</Accordion>
+
+<Accordion title="Can I see individual visitor journeys?">
+  Yes. Navigate to **Funnel → People** to see a list of every identified person and anonymous visitor. Click any row to open their full event timeline — every redirect click, every page they visited, every warm-page match, and every conversion event, in chronological order with timestamps and attribution context.
+</Accordion>
+
+<Accordion title="Why does the analytics show (none) for all UTM fields?">
+  UTM parameters were not included in the redirect URL that generated those visits. Dáva can only parse UTM data that is present in the link at click time. Go to the **Domains** view, open the relevant mapping or link, and add `utm_source`, `utm_medium`, and `utm_campaign` to the destination URL. All future clicks on that link will be correctly attributed. Historical clicks cannot be retroactively re-tagged.
+</Accordion>
+
+<Accordion title="What is the data retention period?">
+  Raw event and redirect-hit data is retained for 90 days by default. You can adjust this under **Settings → Privacy**. After the retention window, raw events are deleted but campaign-level aggregate counts and funnel rates are preserved indefinitely for long-term trend reporting.
+</Accordion>

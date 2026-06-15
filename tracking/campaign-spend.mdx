@@ -1,0 +1,108 @@
+---
+title: "Track Campaign Spend and Calculate CPL and CPA in Dáva"
+sidebarTitle: "Campaign Spend"
+description: "Enter your ad spend against any campaign slice and let Dáva calculate CPL, cost per hot lead, and CPA automatically from your live funnel metrics."
+---
+
+Add your ad spend data to Dáva and get Cost Per Lead (CPL), Cost Per Hot Lead (CPHL), and Cost Per Acquisition (CPA) calculated automatically against your funnel metrics. Instead of manually cross-referencing spreadsheets with your analytics, you define what you spent on a specific campaign slice and Dáva does the division — using the same Cold, Hot, and Conversion counts already in your funnel.
+
+## How it works
+
+You create a **spend record** that defines a campaign slice: a combination of UTM dimensions (source, medium, campaign, content), a date range, and a spend amount in your currency. Dáva matches the slice against the redirect hits and funnel events that fall within that definition, then computes CPL, CPHL, and CPA in real time.
+
+The slice-based model means you do not need perfectly clean UTM tagging to get useful numbers. Define the slice as broadly or as narrowly as your spend data allows:
+
+- **Broad** — "all Facebook traffic in March" → set Source = `facebook`, enter the month's total Facebook budget
+- **Narrow** — "this exact Spring Sale creative" → set Campaign = `spring-sale` and Content = `hero-cta`, enter only that creative's spend
+- **Flexible** — leave any UTM dimension blank to match all values in that dimension within the date range
+
+All saved spend records persist across sessions so you build up a running comparison table over time.
+
+## Adding a spend record
+
+<Steps>
+  <Step title="Open Campaign Spend">
+    In your Dáva dashboard, navigate to **Campaign Spend**, then click **Add Record**.
+  </Step>
+  <Step title="Define your campaign slice">
+    Select the UTM dimensions that identify the traffic you spent money on. Leave any field blank to match all values in that dimension.
+
+    | Field | What it filters |
+    |---|---|
+    | **Source** | `utm_source` (e.g. `facebook`, `google`, `email`) |
+    | **Medium** | `utm_medium` (e.g. `paid`, `cpc`, `newsletter`) |
+    | **Campaign** | `utm_campaign` (e.g. `spring-sale`, `q1-promo`) |
+    | **Content** | `utm_content` (e.g. `hero-image`, `sidebar-cta`) |
+
+    <Tip>
+      The dropdown options for each field are auto-populated from the actual UTM values present in your data — you will only see values that have received traffic.
+    </Tip>
+  </Step>
+  <Step title="Set the date range">
+    Enter the **Start Date** and **End Date** that correspond to when this spend was active. Only redirect hits and funnel events within this window are included in the calculation.
+  </Step>
+  <Step title="Enter your spend amount">
+    Type the total amount you spent on this slice during the date range, and select the currency. Dáva cannot pull spend data automatically from ad platforms, so enter the figure from your ad platform's billing summary or media plan.
+  </Step>
+  <Step title="Save the record">
+    Click **Calculate Metrics**. The record is saved to your Campaign Performance table and CPL, CPHL, and CPA are calculated instantly. You can edit or delete any record later.
+  </Step>
+</Steps>
+
+## Calculated metrics
+
+For each spend record, Dáva computes three cost-effectiveness metrics using your entered spend figure divided by the corresponding funnel count for the matching slice.
+
+| Metric | Formula | What it tells you |
+|---|---|---|
+| **CPL** — Cost Per Lead | Spend ÷ Cold Leads | How much you paid per person who visited any page |
+| **CPHL** — Cost Per Hot Lead | Spend ÷ Hot Leads | How much you paid per person who reached an intent page |
+| **CPA** — Cost Per Acquisition | Spend ÷ Conversions | How much you paid per person who converted |
+
+All three metrics use the same [funnel counting rules](/tracking/conversion-funnel) as the rest of Dáva: counts are by distinct person (identity cluster or anonymous ID), not by session or pageview. A visitor who hit your pricing page five times counts as one Hot lead in your CPHL calculation.
+
+<Note>
+  If a metric shows **—** or **N/A**, no leads or conversions were attributed to that slice in the selected date range. This usually means the UTM dimensions you entered do not match the values recorded in your events — double-check for case mismatches or spelling differences between what you entered and what is in your breakdown tables.
+</Note>
+
+## Drilling down into a spend record
+
+Click any row in the Campaign Performance table to open a detailed breakdown for that slice. The drill-down view shows:
+
+- Which destination URLs received the most traffic within the slice
+- How many people reached each funnel stage (Cold, Hot, Converted) from each URL
+- The journey distribution — how many people converted on the first session versus returning sessions
+- A timeline of when activity peaked within the date range
+
+Use this view to understand not just whether a campaign was cost-effective, but which specific links or creatives within it drove the funnel movement.
+
+## Tips for clean spend tracking
+
+<Tip>
+  Assign a unique `utm_campaign` value to each ad set or creative group. When every spend record maps to exactly one campaign value, your CPL and CPA rows are precise and do not overlap. Broad records that span multiple campaigns can be useful for budget-level summaries but make it harder to identify which specific creative drove results.
+</Tip>
+
+A practical workflow at the end of each week or month:
+
+1. Export your spend by campaign from your ad platform (Google Ads, Meta Ads Manager, etc.)
+2. For each campaign line item, create one spend record in Dáva with the matching UTM dimensions and spend amount
+3. Sort the results table by CPA to instantly see which campaigns are delivering the lowest cost per conversion
+4. Use that ranking to guide budget reallocation before your next campaign cycle
+
+## FAQ
+
+<Accordion title="What if a campaign spans multiple months?">
+  Create one spend record per month. Enter the spend for January with a January date range, then a separate record for February with the February spend and date range. This gives you month-by-month CPA trends for the same campaign, which is more useful than a single blended figure across the whole run.
+</Accordion>
+
+<Accordion title="My CPL or CPA shows NaN or infinity — what went wrong?">
+  This happens when the denominator of the calculation is zero — meaning no Cold Leads or Conversions were attributed to that slice. Common causes:
+
+  - **UTM mismatch** — the source, medium, or campaign value you entered does not exactly match the values recorded in your events. Check the breakdown tables under **Analytics** and copy the exact value from there.
+  - **Date range mismatch** — your spend period does not overlap with the dates when traffic was recorded. Verify the start and end dates.
+  - **Snippet not installed** — Cold Leads and Hot Leads require the `t.js` snippet. If Total Visits is non-zero but all funnel counts are zero, [install the snippet](/tracking/snippet) on your destination site.
+</Accordion>
+
+<Accordion title="Can I delete spend records?">
+  Yes. Click the **Delete** icon on any individual row in the Campaign Performance table to remove that record. To clear your entire spend history, use the **Clear All** button at the top of the Campaign Spend page — this action requires confirmation and cannot be undone. Deleting spend records does not affect your underlying event or redirect-hit data.
+</Accordion>

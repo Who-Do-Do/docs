@@ -1,0 +1,91 @@
+---
+title: "HubSpot, ActiveCampaign, Mailchimp & More Webhooks"
+sidebarTitle: "Other Platforms"
+description: "Set up webhook receivers for HubSpot, ActiveCampaign, Mailchimp, Klaviyo, and Zapier in Dáva using token-based authentication via a URL query parameter."
+---
+
+Dáva includes built-in webhook receivers for HubSpot, ActiveCampaign, Mailchimp, Klaviyo, and Zapier. These platforms use a simpler token-based verification model: instead of computing an HMAC signature, the secret is appended to the endpoint URL as a query parameter, and Dáva validates it on every incoming request.
+
+## Endpoints
+
+All endpoints accept `POST` requests. Prepend `https://api.davazmysel.com` to each path.
+
+| Platform | Path | Event |
+|----------|------|-------|
+| HubSpot | `/hooks/hubspot/deal-won` | Deal won (closed-won stage) |
+| ActiveCampaign | `/hooks/activecampaign/sent` | Campaign sent |
+| Mailchimp | `/hooks/mailchimp/sent` | Campaign sent |
+| Klaviyo | `/hooks/klaviyo/order-placed` | Order placed |
+| Zapier | `/hooks/zapier/event` | Any Zap action |
+
+## Authentication
+
+<Note>
+  These receivers use **query parameter token verification**. The Dáva-generated secret is appended to the endpoint URL as a `token` query parameter:
+
+  ```
+  https://api.davazmysel.com/hooks/hubspot/deal-won?token=YOUR_SECRET
+  ```
+
+  When configuring the webhook in the third-party platform, always use the full URL including the `?token=` parameter. Requests that arrive without a valid token are rejected.
+</Note>
+
+## HubSpot setup
+
+<Steps>
+  <Step title="Create a receiver in Dáva">
+    Go to **Domains** → your domain → **Funnel Config** → **Webhooks** → **Add Receiver**, then choose **HubSpot**.
+
+    Copy the full endpoint URL including the `?token=` query parameter.
+  </Step>
+  <Step title="Create a workflow in HubSpot">
+    In HubSpot, go to **Automation** → **Workflows** and open or create a workflow triggered when a deal reaches the **Closed Won** stage.
+  </Step>
+  <Step title="Add a webhook action">
+    Add a **Trigger a webhook** action to the workflow. Set the method to **POST** and paste the full Dáva endpoint URL (including the token) as the webhook URL. Save and publish the workflow.
+  </Step>
+</Steps>
+
+## Zapier setup
+
+<Steps>
+  <Step title="Create a receiver in Dáva">
+    Go to **Domains** → your domain → **Funnel Config** → **Webhooks** → **Add Receiver**, then choose **Zapier**.
+
+    Copy the full endpoint URL including the `?token=` query parameter.
+  </Step>
+  <Step title="Add a Webhooks action in Zapier">
+    In your Zap, add a **Webhooks by Zapier** action step. Set the action event to **POST**.
+  </Step>
+  <Step title="Enter the endpoint URL">
+    Paste the full Dáva endpoint URL (including the token) into the **URL** field. Set the payload type to **JSON** and map the data fields you want to send. Turn on the Zap.
+  </Step>
+</Steps>
+
+<Tip>
+  Zapier is the recommended path for any platform not listed here. Build a Zap that triggers on your platform's conversion event, then POST to the Zapier receiver in Dáva. This gives you a conversion signal from virtually any SaaS tool without writing code.
+</Tip>
+
+## ActiveCampaign, Mailchimp, and Klaviyo
+
+The setup pattern is the same for all three: create a receiver in Dáva, copy the full URL with token, then paste it into the platform's webhook or automation settings.
+
+- **ActiveCampaign:** go to **Settings** → **Tracking** → **Event Tracking** or use a webhook step in an Automation to POST to the endpoint when a campaign sends.
+- **Mailchimp:** go to **Audience** → **Manage Contacts** → **Webhooks** → **Create New Webhook** and paste the URL.
+- **Klaviyo:** go to **Integrations** → search for **Webhooks** → add a new webhook endpoint and paste the URL.
+
+## What Dáva records
+
+When any of these platforms delivers a webhook, Dáva:
+
+1. Validates the `token` query parameter against your receiver's secret.
+2. Extracts the email address from the event payload and hashes it for identity lookup.
+3. Records a conversion (or send event, for campaign-sent integrations) attributed to the matching identity in your funnel.
+
+## Rotating secrets
+
+<Warning>
+  After you rotate a receiver's secret, the endpoint URL changes because the `?token=` value changes. Update the webhook URL in **every platform** you have configured for that receiver immediately — the old token stops working the moment you rotate. There is no grace period.
+</Warning>
+
+To rotate a secret, open the receiver in **Funnel Config** → **Webhooks**, click **Rotate secret**, copy the new URL, and update all affected platforms before navigating away.

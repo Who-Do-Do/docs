@@ -1,0 +1,125 @@
+---
+title: "Install the Dáva t.js Tracking Snippet on Your Site"
+sidebarTitle: "Snippet"
+description: "Add the t.js snippet to your destination pages to unlock the conversion funnel. Track pageviews, form submits, clicks, and custom events automatically."
+---
+
+The `t.js` snippet enables page-level event tracking on your destination site, unlocking the full conversion funnel. Without it, Dáva only counts redirect hits — you can see how many people clicked your links, but not what they did after they arrived. Install the snippet once in your site's `<head>` and every page load, form submission, and custom event flows into your Dáva funnel automatically.
+
+## Installing the snippet
+
+<Steps>
+  <Step title="Open the snippet settings for your domain">
+    In your Dáva dashboard, navigate to **Domains**, select your domain, then open the **Snippet** tab.
+  </Step>
+  <Step title="Copy your snippet tag">
+    Copy the pre-filled script tag shown on the page. It includes your unique `data-site-id` so no further configuration is needed.
+
+    ```html
+    <script
+      src="https://client.davazmysel.com/t.js"
+      data-site-id="YOUR_SITE_ID"
+      async
+    ></script>
+    ```
+
+    The `data-site-id` attribute uniquely identifies your Dáva account. Every event fired from your pages is automatically associated with the correct account — you do not need separate snippets per domain if they share the same account.
+  </Step>
+  <Step title="Paste the tag into the &lt;head&gt; of every page">
+    Add the script tag to the `<head>` section of your site template so it loads on every page — including your landing pages, warm intent pages (pricing, features), and conversion pages (thank-you, success). Skipping any page means events from that page will not be recorded.
+
+    <Warning>
+      Install the snippet on your **destination site** (the page visitors land on after clicking your Dáva link) — not on the Dáva redirect subdomain itself. Redirect hits are already tracked server-side; the snippet is only needed on pages you own and host.
+    </Warning>
+  </Step>
+</Steps>
+
+## What gets tracked automatically
+
+Once the snippet is on your pages, the following data is collected with no additional code:
+
+- **Pageviews** — fired on every page load, including single-page app navigations (see FAQ)
+- **Session start** — recorded the first time a visitor arrives in a new browsing session
+- **Device type** — desktop, mobile, or tablet
+- **Browser** — Chrome, Safari, Firefox, and others
+- **Country** — resolved from IP address via edge geolocation
+- **Referrer** — the URL the visitor came from, where available
+
+All data is collected using a first-party cookie set on your root domain. Because the cookie is first-party, it is not subject to Safari ITP's seven-day expiry limit and is not blocked by standard ad-blocker lists.
+
+## Tracking custom events
+
+Call `Dava.track()` to record specific actions beyond automatic pageviews. Pass an event name and an optional properties object.
+
+```javascript
+// Track a form submission
+Dava.track('form_submit', { form: 'contact' });
+
+// Track a conversion
+Dava.track('conversion', { value: 99.00, currency: 'USD' });
+
+// Track a custom event
+Dava.track('custom_event', { event_name: 'video_play', video_id: 'intro' });
+```
+
+Custom events appear in the **People** timeline for each visitor and can be used as conversion triggers in your funnel configuration.
+
+## Identity tracking
+
+When a visitor identifies themselves — for example, by submitting a sign-up form — call `Dava.identify()` to associate their anonymous session with their real identity. Dáva uses this to stitch together journeys across devices and sessions.
+
+```javascript
+// Associate a known user with their anonymous session
+Dava.identify({ email: 'user@example.com' }); // email is SHA-256 hashed before sending
+```
+
+<Note>
+  The email address is hashed client-side using SHA-256 **before** it is transmitted. The raw email never leaves the browser and is never stored on Dáva servers. Only the one-way hash is used for identity matching.
+</Note>
+
+## GDPR / consent mode
+
+<Note>
+  By default, the snippet begins collecting data as soon as the page loads. If your site requires explicit consent before tracking (for example, under GDPR), add `data-consent-mode="explicit"` to the script tag. In this mode no cookies are set and no events fire until you call `Dava.consent()` after the visitor opts in through your consent banner.
+
+  ```html
+  <script
+    src="https://client.davazmysel.com/t.js"
+    data-site-id="YOUR_SITE_ID"
+    data-consent-mode="explicit"
+    async
+  ></script>
+  ```
+
+  Dáva does not supply a consent banner — use your existing solution (CookieBot, OneTrust, or custom) and call `Dava.consent()` from your acceptance handler.
+</Note>
+
+## Verifying installation
+
+After installing the snippet, confirm it is firing correctly using either of these methods:
+
+- **Realtime panel** — open your Dáva dashboard and navigate to **Realtime**. Visit a page on your destination site and watch for a live pageview event to appear within a few seconds.
+- **Browser DevTools** — open the **Network** tab in DevTools, visit your page, and filter for requests containing `/t/event`. A successful `200` response confirms the snippet is transmitting events.
+
+## FAQ
+
+<Accordion title="Does the snippet affect page load speed?">
+  No. The snippet tag uses the `async` attribute, which means it loads in parallel with your page content and does not block rendering. Visitors see your page at full speed regardless of the snippet.
+</Accordion>
+
+<Accordion title="Can I use the snippet in a single-page application (SPA)?">
+  Yes. The snippet automatically patches the browser's `history.pushState` to detect client-side navigation. If your framework uses a custom router that does not trigger `pushState`, call `Dava.page()` manually on each route change to fire a pageview event.
+
+  ```javascript
+  // Call on every route change in your SPA
+  Dava.page();
+  ```
+</Accordion>
+
+<Accordion title="What if the snippet doesn't fire?">
+  Work through these checks in order:
+
+  1. **Browser console** — open DevTools and look for JavaScript errors mentioning `dava` or `t.js`. Syntax errors in your page template can prevent the snippet from loading.
+  2. **Site ID** — confirm the `data-site-id` value in your tag matches the ID shown under **Domains → Snippet** in your dashboard. A mismatched ID causes events to be rejected silently.
+  3. **Content-Security-Policy** — if your site sends a `Content-Security-Policy` header, add `https://client.davazmysel.com` to the `script-src` and `connect-src` directives. A blocked CSP is the most common cause of a silently missing snippet.
+</Accordion>

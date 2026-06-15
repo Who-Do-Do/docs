@@ -1,0 +1,68 @@
+---
+title: "Stripe Integration: Record Payments as Dáva Conversions"
+sidebarTitle: "Stripe"
+description: "Connect Stripe to Dáva to record payment-succeeded and subscription-created events as attributed conversions with revenue data in your funnel."
+---
+
+Connect Stripe to Dáva to record payment and subscription events as conversions in your funnel. Once configured, every successful charge or new subscription is automatically matched to the campaign that brought the customer in — giving you accurate revenue attribution without any custom code.
+
+## Supported events
+
+Dáva provides two separate receivers for Stripe events:
+
+| Event | Endpoint |
+|-------|----------|
+| Payment succeeded | `POST https://api.davazmysel.com/hooks/stripe/payment-succeeded` |
+| Subscription created | `POST https://api.davazmysel.com/hooks/stripe/subscription-created` |
+
+Create one receiver per event type, or create both if you want to track one-time payments and subscriptions separately.
+
+## Setup
+
+<Steps>
+  <Step title="Create a webhook receiver in Dáva">
+    Go to **Domains** → your domain → **Funnel Config** → **Webhooks** → **Add Receiver**, then choose **Stripe** and the event type you want to track.
+
+    Dáva generates a unique endpoint URL for this receiver. Copy both the URL and the signing secret before closing the dialog — the secret is shown only once.
+  </Step>
+  <Step title="Open Stripe webhook settings">
+    In the [Stripe Dashboard](https://dashboard.stripe.com), go to **Developers** → **Webhooks** → **Add endpoint**.
+  </Step>
+  <Step title="Enter the endpoint URL">
+    Paste the Dáva endpoint URL into the **Endpoint URL** field.
+  </Step>
+  <Step title="Select the event to listen for">
+    Choose the Stripe event type that matches your receiver:
+
+    - For **payment-succeeded**: select `payment_intent.succeeded`
+    - For **subscription-created**: select `customer.subscription.created`
+  </Step>
+  <Step title="Copy the Stripe signing secret">
+    After saving the endpoint, Stripe displays a **Signing secret** (it starts with `whsec_`). Copy this value and keep it — you'll need it in the next step.
+
+    Enter this Stripe-issued signing secret into Dáva when prompted in the receiver settings. Dáva uses it to verify the `Stripe-Signature` header on every incoming event.
+  </Step>
+</Steps>
+
+<Note>
+  Stripe signs webhooks using a timestamp-based HMAC-SHA256 signature included in the `Stripe-Signature` header. Dáva validates this signature on every request and rejects events with invalid or expired timestamps. This protects against replay attacks where a previously valid request is re-sent by a third party.
+</Note>
+
+## What Dáva records
+
+When Stripe delivers an event, Dáva:
+
+1. Verifies the `Stripe-Signature` header using the Stripe-issued signing secret.
+2. Extracts the customer's email from the event payload and matches it against your identity graph.
+3. Records a **conversion** event attributed to the originating campaign, with the payment or subscription value stored as revenue.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title='"Signature mismatch" or HTTP 401 responses'>
+    Confirm that you are using the **Stripe signing secret** (starts with `whsec_`) — not your Dáva-generated secret, and not your Stripe API secret key. The signing secret is found in the Stripe Dashboard under **Developers** → **Webhooks** → your endpoint → **Signing secret**. Update the value in your Dáva receiver settings if needed.
+  </Accordion>
+  <Accordion title="Events are not appearing in my funnel">
+    Check the **Webhook delivery** log in the Stripe Dashboard (**Developers** → **Webhooks** → your endpoint → **Recent deliveries**). Look for failed delivery attempts and review the HTTP response code Dáva returned. A 401 indicates a signature issue; a 400 indicates a malformed payload. If deliveries show 200 but events still don't appear in Dáva, check the **Funnel events** log in your Dáva dashboard for processing errors.
+  </Accordion>
+</AccordionGroup>

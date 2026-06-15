@@ -1,0 +1,131 @@
+---
+title: "Hosted Pages: Bot-Resistant Tracking for Email Campaigns"
+sidebarTitle: "Hosted Pages"
+description: "Serve static HTML from your Dáva subdomain. Dáva injects a tracking pixel that fires only in real browsers — email scanners never trigger it."
+---
+
+Hosted Pages (Mode D) lets you serve static HTML files directly from your Dáva subdomain. Instead of immediately redirecting a visitor, Dáva loads your page in the browser first, fires a tracking pixel to record the visit, and then optionally redirects to a final destination. Because the tracking pixel runs as JavaScript inside a real browser session, it is never triggered by email security scanners, bot crawlers, or link previewers — tools that fetch HTML without executing JavaScript. If email or SMS campaign attribution is routinely inflated or missing, Hosted Pages is the structural fix.
+
+## Use cases
+
+- **Age verification gates** — show a confirmation page before routing visitors onward
+- **Consent and opt-in pages** — capture agreement before forwarding to a destination
+- **Gateway landing pages** — deliver campaign messaging and record attribution before purchase
+- **Email and SMS pixel tracking** — ensure attribution fires only for genuine human visits, not security pre-scans
+
+## Setup
+
+<Steps>
+  <Step title="Enable Mode D — Hosted Pages">
+    Open your subdomain's **Domain Settings**, go to the **Mode** tab, and select **Hosted Pages**.
+  </Step>
+  <Step title="Upload your HTML files">
+    Go to **Domain Settings → Upload Files** and upload your static assets. Two options are available:
+
+    - **ZIP upload** — create a `.zip` containing your full file structure (HTML, CSS, JS, images, fonts) and upload it in one step. Dáva extracts and serves all files at their relative paths.
+    - **File-by-file upload** — click **Upload Files** and select individual files. Dáva organises them by path.
+
+    Requests to a directory path — for example, `https://pages.yourbrand.com/landing/` — automatically serve `index.html` from that directory if it exists.
+  </Step>
+  <Step title="Confirm the tracking pixel is in place">
+    Dáva automatically injects the tracking pixel before the closing `</body>` tag of every HTML file at upload time. The pixel reads the page's query string, extracts UTM parameters and any other query values, and fires the attribution event to Dáva's backend.
+
+    If you prefer to place it manually — or if auto-injection isn't suitable for your page — add this snippet to your HTML before `</body>`:
+
+    ```html
+    <script src="/t.js"></script>
+    ```
+  </Step>
+  <Step title="Set a final destination URL (optional)">
+    If you want visitors to be redirected after the pixel fires, go to **Domain Settings → Default Destination** and enter the target URL — for example, `https://shop.yourbrand.com/checkout`. Leave this blank to keep visitors on the hosted page after tracking.
+  </Step>
+  <Step title="Save draft, then Publish">
+    Click **Save** to store your changes as a draft. Use the **Test URL** tool to confirm the correct file is served and attribution fields are populated as expected. Click **Publish** to go live.
+  </Step>
+</Steps>
+
+## Supported file types
+
+<Note>
+  Hosted Pages supports HTML, CSS, JavaScript, images (PNG, JPG, GIF, SVG, WebP), fonts (TTF, OTF, WOFF, WOFF2), and video (MP4, WebM). Server-side code — PHP, Node.js, Python, or any language that requires a runtime — is not supported. All logic must be handled in client-side JavaScript. Directory requests serve `index.html` from that directory if present.
+</Note>
+
+## Accessing query params in pages
+
+Your page can read the original query parameters using the standard Web API:
+
+```javascript
+const params = new URLSearchParams(window.location.search);
+const contactId = params.get('contact_id');
+const source = params.get('utm_source');
+```
+
+To forward all query parameters to an outbound link when the visitor clicks through, use the `Dava.appendParams()` helper — included automatically with the tracking pixel:
+
+```html
+<a href="#" onclick="Dava.appendParams('https://shop.yourbrand.com/checkout'); return false;">
+  Continue to checkout
+</a>
+```
+
+This appends every query parameter from the current page URL to the destination URL at the moment of the click, ensuring per-recipient context — such as `contact_id` or `utm_campaign` — survives the handoff to your final destination.
+
+## Managing files
+
+**View current files** — go to **Domain Settings → Files** to browse the full file tree hosted on your subdomain. Click any file to preview its contents.
+
+**Upload a new version** — upload a new ZIP or individual files at any time. Each upload creates a new **version**. The new version goes live immediately.
+
+**Roll back to a previous version** — go to **Domain Settings → Versions**, find the version you want to restore, and click **Rollback**. That version becomes live within seconds. Previous versions are retained indefinitely.
+
+**Delete a file or version** — click **Delete** next to any file or version. Deleted items are soft-deleted and kept in history for 30 days before archiving.
+
+## Auto-redirect after pixel
+
+When you set a **Default Destination**, Dáva redirects visitors automatically after the tracking pixel fires. The flow is:
+
+1. Visitor's browser loads your hosted page
+2. The tracking pixel script executes and records the visit with full attribution
+3. The browser redirects to your configured destination URL
+
+If no destination is set, the visitor remains on the hosted page after the pixel fires. You can also trigger the redirect yourself using JavaScript on the page, giving you control over timing or conditions:
+
+```html
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      window.location.href = 'https://shop.yourbrand.com/next-step';
+    }, 1500);
+  });
+</script>
+```
+
+<Tip>
+  Allow at least 1–2 seconds before triggering a JavaScript redirect so the tracking pixel has time to reach Dáva's backend. The pixel fires asynchronously and does not block the page.
+</Tip>
+
+## FAQ
+
+<Accordion title="Does the tracking pixel fire on bot traffic?">
+  No. The pixel runs as JavaScript inside a browser session. Bots, email security pre-scanners, and link previewers fetch the HTML but do not execute JavaScript, so the pixel never fires for them. This is the core reason Hosted Pages is recommended for email and SMS campaigns where scanner inflation is a problem. Dáva also applies a server-side bot filter as an additional layer, blocking visits from known crawler and scanner user-agent strings before they are counted.
+</Accordion>
+
+<Accordion title="Can I use custom JavaScript frameworks like React or Vue?">
+  Dáva hosts static files as-is — no build step is run at upload time. If your page uses a JavaScript framework, you must upload the compiled, static output (HTML + bundled JS + CSS) rather than the source code. Export your project from your build tool first, then upload the resulting `dist` or `build` folder as a ZIP.
+</Accordion>
+
+<Accordion title="What if my visitor has JavaScript disabled?">
+  The tracking pixel will not fire for visitors with JavaScript disabled. If you need to capture these visits, add a `<noscript>` fallback redirect in your HTML:
+
+  ```html
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=https://shop.yourbrand.com/checkout" />
+  </noscript>
+  ```
+
+  This forwards the visitor onward without firing the pixel. The visit will not appear in Dáva analytics, but the visitor will still reach your destination.
+</Accordion>
+
+<Accordion title="What file size limits apply?">
+  Each individual file can be up to **100 MB**. The total storage per subdomain is **1 GB** across all files and versions. If you need additional storage, contact support. For best performance, compress images before uploading and minify CSS and JavaScript files — smaller assets load faster and stay well within limits.
+</Accordion>

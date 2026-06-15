@@ -1,0 +1,123 @@
+---
+title: "GDPR Compliance and Privacy Settings in Dáva"
+sidebarTitle: "Privacy & GDPR"
+description: "Configure data retention, respond to GDPR access and erasure requests, enable consent mode, and understand how Dáva handles personal data."
+---
+
+Dáva is built with privacy compliance in mind. You can configure data retention windows per domain, respond to GDPR data-subject requests directly from the dashboard, and control exactly when and how personal data is collected through the tracking snippet. This page explains what data Dáva collects, how it is protected, and the tools available to you as the account Owner.
+
+## What data Dáva collects
+
+Dáva collects the minimum data needed to measure redirects and page activity:
+
+- **Redirect hits** — URL path, timestamp, country (derived from IP, then truncated), device type, browser, and referrer
+- **Page events (snippet)** — pageview URL, `anonymous_id` (first-party cookie), `session_id`, and device/browser info
+- **Identity data** — only collected when you explicitly call `Dava.identify()` or a webhook fires; stored as a SHA-256 hash of the email address plus any external IDs you provide
+
+<Note>
+  Raw email addresses are **never stored** in Dáva. Any email you or your users provide is hashed with SHA-256 before it is saved. The original address is not recoverable from the hash.
+</Note>
+
+## Data retention
+
+You can set a custom retention window for each domain. Events older than the window are automatically and permanently deleted.
+
+<Steps>
+  <Step title="Open Privacy settings">
+    Navigate to **Settings → Privacy → Data Retention**.
+  </Step>
+  <Step title="Select a domain">
+    Choose the domain you want to configure from the list.
+  </Step>
+  <Step title="Set the retention period">
+    Enter the number of days you want to keep events for that domain. The default is **90 days**.
+  </Step>
+  <Step title="Save your changes">
+    Click **Save**. The new retention window applies going forward. Events already older than the new window are queued for deletion in the next scheduled cleanup run.
+  </Step>
+</Steps>
+
+<Tip>
+  For EU-focused sites, a 90-day or shorter retention window helps demonstrate data minimisation under GDPR Article 5(1)(e).
+</Tip>
+
+## Consent mode
+
+By default, Dáva starts collecting anonymous events as soon as the snippet loads. For EU users operating under GDPR or ePrivacy regulations, you can switch to **explicit consent mode** so that no data is collected until the user actively accepts your cookie banner.
+
+Add the `data-consent-mode="explicit"` attribute to your snippet:
+
+```html
+<script src="https://client.davazmysel.com/t.js"
+  data-site-id="YOUR_SITE_ID"
+  data-consent-mode="explicit"
+  async></script>
+```
+
+Then call `Dava.consent()` after the user accepts consent:
+
+```javascript
+// Call this after the user accepts your cookie banner
+Dava.consent();
+```
+
+In explicit consent mode, `Dava.consent()` unlocks tracking for the current session and all future sessions on that browser. No events — not even anonymous ones — are sent before this call.
+
+## Right to access (Article 15)
+
+GDPR gives data subjects the right to access all personal data you hold about them. Dáva lets you search for events by email address or contact ID and export the results.
+
+<Steps>
+  <Step title="Open Privacy settings">
+    Navigate to **Settings → Privacy**.
+  </Step>
+  <Step title="Search by email or contact ID">
+    Enter either the data subject's **email address** or their **contact ID** in the corresponding field, then click **Search**. When you search by email, Dáva hashes it automatically and looks up all events that match the resulting hash.
+  </Step>
+  <Step title="Review and export">
+    The results show every event associated with that person across your domains. Click **Export as JSON** to download the full dataset, which you can share with the data subject.
+  </Step>
+</Steps>
+
+## Right to erasure (Article 17)
+
+GDPR gives data subjects the right to request deletion of all personal data you hold. Dáva supports deletion by email address or by contact ID.
+
+<Steps>
+  <Step title="Open Privacy settings">
+    Navigate to **Settings → Privacy**.
+  </Step>
+  <Step title="Choose a deletion method">
+    Select either **Delete by email** or **Delete by contact ID**, depending on what information you have from the data subject's request.
+  </Step>
+  <Step title="Enter the identifier">
+    Type the email address or contact ID. Dáva hashes the email automatically before performing the lookup.
+  </Step>
+  <Step title="Confirm deletion">
+    Click **Delete**. All events linked to that person are **soft-deleted immediately** — they no longer appear in any dashboard or export. Hard deletion (permanent removal from storage) follows your configured retention schedule.
+  </Step>
+</Steps>
+
+<Warning>
+  Deletion is scoped to your account. Only the account **Owner** can perform GDPR deletion requests. Once soft-deleted, the data is not recoverable from the dashboard.
+</Warning>
+
+## IP address handling
+
+<Note>
+  Dáva uses IP addresses solely to derive a country code for geolocation. After the country is determined, the last octet of the IPv4 address (or the last 80 bits of an IPv6 address) is zeroed out. **The truncated IP is not stored.** No IP address — full or partial — is ever recorded.
+</Note>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Is Dáva GDPR-compliant?">
+    Yes. Dáva is designed around the core GDPR principles: **data minimisation** (only the data needed is collected), **storage limitation** (configurable retention windows with automatic deletion), **right to erasure** (delete by email or contact ID), and **right to access** (search and export by email). IP addresses are truncated, emails are hashed, and consent mode is available for explicit opt-in flows.
+  </Accordion>
+  <Accordion title="Where is data stored?">
+    All event and account data is stored in the **EU** on a managed Postgres database. Redirect routing and event ingestion run at the edge for low latency, but persistent storage always remains within EU-based infrastructure.
+  </Accordion>
+  <Accordion title="Can I disable tracking entirely for a domain?">
+    Yes. You can **pause** a domain from **Settings → Domains**. While a domain is paused, Dáva does not record any redirect hits or snippet events for it. Pausing is reversible — resume the domain at any time to start collecting data again.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,126 @@
+---
+title: "Configure Your Dáva Conversion Funnel Stages and Goals"
+sidebarTitle: "Conversion Funnel"
+description: "Define which pages signal intent and which signal conversion, then track how many people move from Cold to Hot to Converted across every campaign."
+---
+
+The conversion funnel shows you how many people moved from **Cold** (visited any page) to **Hot** (visited a key intent page) to **Converted** (reached a goal page or triggered a webhook event). You decide which pages count as Warm and which count as Conversion — Dáva classifies every visitor against those patterns automatically and counts by person, not by session or pageview. This means one person visiting your pricing page three times counts as one Hot lead, not three.
+
+## Funnel stages explained
+
+The three stages form a nested set: every Conversion was first a Hot lead, and every Hot lead was first a Cold lead.
+
+<CardGroup cols={3}>
+  <Card title="Cold" icon="snowflake" href="/tracking/snippet">
+    **Any person with at least one pageview.**
+
+    A visitor becomes a Cold lead the moment the snippet fires on any page of your site — paid traffic, organic search, or direct. No special page configuration required.
+  </Card>
+  <Card title="Hot" icon="fire" href="/tracking/conversion-funnel#configuring-the-funnel">
+    **A person who visited a designated warm page.**
+
+    You configure URL path patterns that signal intent — for example `/pricing*` or `/features*`. Anyone who lands on a matching page is classified as a Hot lead for the entire journey.
+  </Card>
+  <Card title="Converted" icon="circle-check" href="/tracking/conversion-funnel#configuring-the-funnel">
+    **A person who reached a conversion page or triggered a webhook.**
+
+    Configure URL patterns for your success or thank-you pages, or connect a webhook receiver (Shopify, Stripe, HubSpot) so that backend events also count as conversions.
+  </Card>
+</CardGroup>
+
+<Note>
+  Stages are cumulative, not mutually exclusive. A single person can be Cold **and** Hot **and** Converted in the same journey if they pass through all three page types. Counts always reflect distinct people: Conversions ⊆ Hot Leads ⊆ Cold Leads.
+</Note>
+
+## Configuring the funnel
+
+<Steps>
+  <Step title="Open Funnel Config for your domain">
+    Go to **Dashboard → Domains**, select your domain, then open the **Funnel Config** tab.
+  </Step>
+  <Step title="Add warm page patterns">
+    Enter URL path patterns for the pages that signal intent. Use `*` for single-segment wildcards or `**` to match any path depth.
+
+    **Examples:**
+    - `/pricing*` — matches `/pricing`, `/pricing/annual`, `/pricing/compare`
+    - `/features*` — matches `/features` and any sub-pages
+    - `/checkout*` — matches your checkout flow
+    - `/quote/step-2` — matches an exact step in a multi-step form
+
+    Click **Test** next to any pattern to verify it matches the URLs you expect before saving.
+  </Step>
+  <Step title="Add conversion patterns or webhook receivers">
+    Enter URL path patterns for your conversion pages — thank-you pages, success screens, order confirmations.
+
+    **Examples:**
+    - `/thank-you*`
+    - `/success`
+    - `/order-confirmation`
+
+    Alternatively (or additionally), enable webhook receivers under **Active webhook receivers** to record backend conversions from Shopify, Stripe, or HubSpot. Webhook-based conversions count toward the Conversion stage exactly like page-based conversions.
+  </Step>
+  <Step title="Save your configuration">
+    Click **Save**. Funnel classification is applied at query time — changing a pattern retroactively reclassifies all existing events against the new configuration immediately. No code redeployment is needed.
+  </Step>
+</Steps>
+
+## Reading funnel metrics
+
+The four KPI cards at the top of your dashboard pull from two separate data sources. Understanding the distinction prevents confusion when the numbers do not match each other.
+
+| Card | Source | What it counts |
+|---|---|---|
+| **Total Visits** | Redirect hit log | Every click through a Dáva redirect link (bot-excluded). No snippet required. |
+| **Cold Leads** | Snippet page events | Distinct people with at least one pageview recorded by `t.js`. |
+| **Hot Leads** | Snippet page events | Distinct people who viewed a page matching a warm pattern. |
+| **Conversions** | Snippet page events + webhooks | Distinct people who reached a conversion page or triggered a webhook conversion. |
+
+<Note>
+  **Total Visits and Cold Leads measure different things** and will almost never be equal. Total Visits counts paid clicks at the redirect layer; Cold Leads counts people whose browser fired a snippet pageview on your destination site. The gap between the two is meaningful — it can reveal bot traffic, users who bounced before the snippet loaded, or pages where the snippet is not yet installed.
+</Note>
+
+## Date range and filters
+
+Use the controls at the top of the funnel view to focus on specific time windows or traffic segments:
+
+- **Presets** — Today, Last 7 days, Last 30 days, Last 90 days
+- **Custom range** — pick any start and end date
+- **Timezone** — all dates use the timezone set under **Settings → Timezone**
+- **Domain filter** — view a single domain or all domains in your account
+
+All four KPI cards and the funnel chart update together when you change any filter.
+
+## Per-person journey view
+
+The funnel is not just aggregate numbers — you can inspect individual journeys. In the **Funnel** view, open the **People** tab to see a list of every identified person or anonymous visitor in the current date range. Click any row to open a full timeline showing:
+
+- Which Dáva redirect link the person first clicked (with campaign attribution)
+- Every page they visited, in order, with timestamps
+- When and how they reached the Hot stage
+- When and how they converted, including the exact conversion event source (page or webhook)
+
+Use this view to understand the typical path to conversion, spot where people drop off, and verify that your funnel patterns are matching the right pages.
+
+## FAQ
+
+<Accordion title="Why is my Cold leads count 0?">
+  Cold leads comes entirely from snippet pageview events. A count of 0 means one of two things:
+
+  1. **The snippet is not installed** on your destination site, or it was installed recently and no visits have occurred yet.
+  2. **The snippet is installed but not firing** — check the Realtime panel in your dashboard. If no events appear after visiting a page yourself, refer to the [snippet troubleshooting guide](/tracking/snippet#faq).
+
+  Note that Total Visits can be non-zero while Cold Leads is 0 — this is normal when the redirect is working but the snippet is missing on the landing page.
+</Accordion>
+
+<Accordion title="Why do Total Visits not equal Cold Leads?">
+  They count different things at different layers of the stack:
+
+  - **Total Visits** = clicks recorded server-side when a request hits a Dáva redirect domain. This happens before the visitor even reaches your page.
+  - **Cold Leads** = pageview events fired by the `t.js` snippet on your destination page, counted by distinct person.
+
+  These two numbers diverge for several reasons: bots click links but do not run JavaScript; visitors may close the tab before the snippet fires; the snippet may not be installed on all pages. The gap is informative, not a bug.
+</Accordion>
+
+<Accordion title="Can I have multiple conversion goals?">
+  Yes. Add as many conversion page patterns as your funnel requires — for example `/thank-you*`, `/success`, and `/policy-issued` can all be conversion patterns simultaneously. You can also enable multiple webhook receivers (Shopify **and** Stripe, for instance) so that both page-based and backend conversions are captured. Every pattern and every active webhook receiver contributes to the single Conversions count.
+</Accordion>

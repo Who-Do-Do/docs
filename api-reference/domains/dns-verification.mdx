@@ -1,0 +1,219 @@
+---
+title: "DNS Verification and Test URL for Dáva Domains"
+sidebarTitle: "DNS Verification"
+description: "Check DNS verification status across all resolvers, trigger a manual re-check, and preview redirect behaviour for any domain using the Dáva API."
+---
+
+Check the DNS verification status of any domain and trigger a manual re-check when you need an immediate result rather than waiting for the next automated poll. Dáva verifies each domain against four public resolvers — Cloudflare, Google, Quad9, and OpenDNS — and marks the domain `active` only when all four confirm the CNAME is in place.
+
+## Get DNS Status
+
+Retrieve the current DNS verification state for a domain, including the per-resolver breakdown.
+
+```
+GET https://api.davazmysel.com/domains/:id/dns-status
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the domain whose DNS status you want to retrieve.
+</ParamField>
+
+### Example Request
+
+```bash
+curl https://api.davazmysel.com/domains/d123abc/dns-status \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "active",
+    "resolvers": {
+      "cloudflare": "ok",
+      "google": "ok",
+      "quad9": "ok",
+      "opendns": "ok"
+    },
+    "checked_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### Response Fields
+
+<ResponseField name="data.status" type="string">
+  Overall verification status for the domain:
+
+  | Value       | Meaning                                                             |
+  | ----------- | ------------------------------------------------------------------- |
+  | `pending`   | Verification has not started yet — CNAME record may not exist       |
+  | `verifying` | Some resolvers see the CNAME; waiting for full propagation          |
+  | `active`    | All four resolvers confirm the CNAME — domain is ready for traffic  |
+  | `invalid`   | CNAME exists but points to the wrong target — fix your DNS record   |
+  | `error`     | Verification check failed due to a temporary issue — retry shortly  |
+</ResponseField>
+
+<ResponseField name="data.resolvers" type="object">
+  Per-resolver verification results. Each key is a resolver name (`cloudflare`, `google`, `quad9`, `opendns`) and its value is `"ok"` when that resolver sees the correct CNAME, or an error string when it does not.
+</ResponseField>
+
+<ResponseField name="data.checked_at" type="string">
+  ISO 8601 timestamp of when the most recent DNS check was performed.
+</ResponseField>
+
+---
+
+## Trigger a Manual Re-check
+
+Request an immediate DNS verification check for a domain. Use this after updating a CNAME record and you want a result right away rather than waiting for the next scheduled check.
+
+```
+POST https://api.davazmysel.com/domains/:id/check-status
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the domain to re-check.
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/domains/d123abc/check-status \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "status": "verifying",
+    "resolvers": {
+      "cloudflare": "ok",
+      "google": "ok",
+      "quad9": "pending",
+      "opendns": "pending"
+    },
+    "checked_at": "2024-01-15T10:35:00Z"
+  }
+}
+```
+
+<Note>
+  DNS re-checks are throttled to at most once per 60 seconds per domain to avoid flooding public resolvers. If you call this endpoint more frequently, Dáva returns the cached result from the most recent check rather than triggering a new one.
+</Note>
+
+---
+
+## Test a URL
+
+Preview exactly how Dáva will process an inbound URL for a domain — without sending any real traffic. Use this to verify redirect rules, check attribution extraction, and confirm mappings before going live.
+
+```
+POST https://api.davazmysel.com/domains/:id/test-url
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the domain to test against.
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="against" type="string" default="published">
+  Which version of the domain configuration to test against. Accepted values: `published` (default), `draft`.
+</ParamField>
+
+### Request Body
+
+<ParamField body="inbound_url" type="string" required>
+  The full inbound URL to test, including scheme, hostname, path, and any query parameters (e.g. `https://go.yourdomain.com.au/spring-sale?utm_source=email`).
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/domains/d123abc/test-url \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inbound_url": "https://go.yourdomain.com.au/spring-sale?utm_source=email&utm_campaign=spring"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "ok": true,
+    "against": "published",
+    "inbound": {
+      "original": "https://go.yourdomain.com.au/spring-sale?utm_source=email&utm_campaign=spring",
+      "normalized": "https://go.yourdomain.com.au/spring-sale",
+      "hostname": "go.yourdomain.com.au",
+      "path": "/spring-sale",
+      "query": {
+        "utm_source": ["email"],
+        "utm_campaign": ["spring"]
+      }
+    },
+    "resolution": {
+      "matched_rule": "exact",
+      "matched_pattern": "/spring-sale",
+      "destination_url": "https://quote.yourdomain.com.au/offer",
+      "mode_used": "c",
+      "mode_name": "manual_mappings"
+    },
+    "attribution": {
+      "source": "email",
+      "campaign": "spring"
+    }
+  }
+}
+```
+
+### Response Fields
+
+<ResponseField name="data.ok" type="boolean">
+  `true` when the URL was successfully resolved. `false` when the domain configuration prevented resolution.
+</ResponseField>
+
+<ResponseField name="data.against" type="string">
+  Confirms which configuration version was used — `published` or `draft`.
+</ResponseField>
+
+<ResponseField name="data.inbound" type="object">
+  Parsed breakdown of the inbound URL: the original string, a normalised form, the hostname, path, and query parameters as key-to-array pairs.
+</ResponseField>
+
+<ResponseField name="data.resolution" type="object">
+  How the URL was resolved:
+
+  | Field             | Description                                                                 |
+  | ----------------- | --------------------------------------------------------------------------- |
+  | `matched_rule`    | The rule type matched: `exact`, `glob`, `fallback`, or `none`               |
+  | `matched_pattern` | The specific pattern that matched (when applicable)                         |
+  | `destination_url` | The final redirect destination URL                                          |
+  | `mode_used`       | Internal mode identifier (`a`, `b`, `c`, or `d`)                           |
+  | `mode_name`       | Human-readable mode name (e.g. `simple_redirect`, `manual_mappings`)        |
+</ResponseField>
+
+<ResponseField name="data.attribution" type="object">
+  Key-value map of attribution values extracted from the URL.
+</ResponseField>
+
+<Tip>
+  Use `against=draft` to preview changes to your domain configuration before publishing them. This lets you verify that new mappings resolve correctly without affecting live traffic.
+</Tip>

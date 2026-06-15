@@ -1,0 +1,118 @@
+---
+title: "Batch Event Ingestion via the Dáva Events API"
+sidebarTitle: "POST /v1/events/batch"
+description: "Send up to 1000 events in a single asynchronous request with POST /v1/events/batch. Ideal for high-volume imports and bulk re-processing."
+---
+
+`POST /v1/events/batch` sends up to 1 000 events in a single asynchronous request. Use this endpoint for high-volume imports, historical data backfills, or bulk re-processing of events from another system. The API accepts the payload immediately and returns a job ID — events are processed in the background so your server is never blocked waiting for ingestion to complete.
+
+## Endpoint
+
+```
+POST https://api.davazmysel.com/v1/events/batch
+```
+
+## Request Body
+
+<ParamField body="events" type="array" required>
+  An array of event objects to ingest. Each object follows the same shape as the [single event endpoint](/api-reference/events/ingest) — the same fields (`subdomain`, `event_type`, `anonymous_id`, `hashed_email`, `properties`, etc.) apply to every item in the array.
+
+  - **Minimum:** 1 event
+  - **Maximum:** 1 000 events per request
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/v1/events/batch \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [
+      {
+        "subdomain": "go",
+        "hashed_email": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+        "event_type": "conversion",
+        "properties": { "value": 49.00, "currency": "USD" }
+      },
+      {
+        "subdomain": "go",
+        "hashed_email": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+        "event_type": "pageview",
+        "properties": { "page": "/pricing" }
+      }
+    ]
+  }'
+```
+
+## Response
+
+Returns `202 Accepted` immediately. The job is queued for asynchronous processing — events have **not** been ingested yet when you receive this response.
+
+```json
+{
+  "success": true,
+  "data": {
+    "job_id": "job_abc123"
+  }
+}
+```
+
+<ResponseField name="success" type="boolean">
+  `true` when the batch was accepted and a processing job was created.
+</ResponseField>
+
+<ResponseField name="data.job_id" type="string">
+  The unique identifier for the background processing job. Use this ID to poll for job status.
+</ResponseField>
+
+## Polling Batch Status
+
+Use `GET /v1/events/batch/:job_id` to check the processing status of a batch job.
+
+```bash
+curl https://api.davazmysel.com/v1/events/batch/job_abc123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "job_id": "job_abc123",
+    "status": "completed",
+    "total": 2,
+    "processed": 2,
+    "failed": 0
+  }
+}
+```
+
+<ResponseField name="data.status" type="string">
+  Current status of the batch job. Possible values:
+
+  | Status       | Meaning                                                   |
+  | ------------ | --------------------------------------------------------- |
+  | `pending`    | Job is queued and waiting for a worker to pick it up      |
+  | `processing` | Worker is actively ingesting events                       |
+  | `completed`  | All events have been processed                            |
+  | `failed`     | The job encountered a fatal error and stopped processing  |
+</ResponseField>
+
+<ResponseField name="data.total" type="integer">
+  Total number of events submitted in the batch.
+</ResponseField>
+
+<ResponseField name="data.processed" type="integer">
+  Number of events successfully ingested so far.
+</ResponseField>
+
+<ResponseField name="data.failed" type="integer">
+  Number of events that could not be ingested. Check individual event errors if you need to identify which events failed.
+</ResponseField>
+
+<Note>
+  Batch jobs with fewer than 100 events are typically processed within 60 seconds. Larger batches — up to the 1 000-event maximum — may take up to 5 minutes. Poll the status endpoint every 10–15 seconds rather than immediately after submission.
+</Note>

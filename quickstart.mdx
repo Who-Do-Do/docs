@@ -1,0 +1,103 @@
+---
+title: "Get Your First Tracked Campaign Link Live with Dáva"
+sidebarTitle: "Quickstart"
+description: "Add your first tracked subdomain, choose a redirect mode, and send your first fully attributed campaign link — all in under five minutes."
+---
+
+This guide walks you through everything you need to go from a blank Dáva account to a live, fully tracked campaign link. By the end you'll have a verified subdomain, a configured redirect mode, and a URL ready to drop into your first campaign.
+
+<Steps>
+  <Step title="Create your account">
+    Go to [app.davazmysel.com](https://app.davazmysel.com) and click **Sign Up**. Enter your email address and choose a password. Check your inbox for a verification email and click the link inside. Once verified, you'll land directly in the Dáva dashboard.
+  </Step>
+
+  <Step title="Add your first domain">
+    In the dashboard, navigate to **Domains → Add Domain**. Fill in two fields:
+
+    - **Subdomain** — the full subdomain you want to track through, e.g. `go.yourbrand.com`
+    - **Destination host** — where traffic should ultimately land, e.g. `https://yourbrand.com`
+
+    Click **Create Domain**. Dáva will display the CNAME record you need to add in the next step. Your domain status will show as **Pending** until the DNS record is detected.
+  </Step>
+
+  <Step title="Add your CNAME record">
+    Log in to your DNS provider and add a CNAME record pointing your subdomain to `client.davazmysel.com`. The exact steps vary by provider:
+
+    <Tabs>
+      <Tab title="Cloudflare">
+        1. Open your domain in the Cloudflare dashboard and go to **DNS → Records**.
+        2. Click **+ Add record**.
+        3. Set **Type** to `CNAME`.
+        4. Set **Name** to your subdomain prefix — e.g. `go` (Cloudflare appends your zone automatically).
+        5. Set **Target** to `client.davazmysel.com`.
+        6. Set **Proxy status** to **DNS only** (grey cloud). This is required — see the warning below.
+        7. Leave **TTL** on **Auto** and click **Save**.
+
+        <Warning>
+          You must disable Cloudflare's orange-cloud proxy for this record. Set it to **DNS only** (grey cloud). If the proxy is enabled, Cloudflare terminates the connection before it reaches Dáva, and TLS provisioning will fail.
+        </Warning>
+      </Tab>
+      <Tab title="Route 53">
+        1. Open the **Route 53** console and go to **Hosted zones → your domain**.
+        2. Click **Create record**.
+        3. Set **Record name** to your full subdomain, e.g. `go.yourbrand.com`.
+        4. Set **Record type** to `CNAME`.
+        5. Set **Value** to `client.davazmysel.com`.
+        6. Set **TTL** to `300`.
+        7. Click **Create records**.
+      </Tab>
+      <Tab title="GoDaddy">
+        1. Go to your domain's **DNS settings** in GoDaddy.
+        2. Click **Add** and select **CNAME** as the record type.
+        3. Set **Name** to your subdomain prefix, e.g. `go`.
+        4. Set **Value** to `client.davazmysel.com`.
+        5. Set **TTL** to **1 hour**.
+        6. Click **Save**.
+      </Tab>
+    </Tabs>
+
+    <Note>
+      DNS propagation typically takes **1–15 minutes**, though some registrars can take longer. Dáva verifies your CNAME across four independent public resolvers — Cloudflare, Google, Quad9, and OpenDNS — before marking your domain **Active**. You can watch the status update live in the dashboard, or click **Retry Verification** to trigger an immediate check.
+    </Note>
+  </Step>
+
+  <Step title="Choose a redirect mode">
+    Once your domain is **Active**, go to **Domain Settings → Mode** and choose one of the four operating modes:
+
+    | Mode | Best for | Setup time |
+    |------|----------|------------|
+    | **A — Simple Redirect** | Host-swap with UTM passthrough | ~2 min |
+    | **B — Structured Passthrough** | URL-convention attribution (e.g. `/ref/{brand}/{campaign}`) | ~10 min |
+    | **C — Manual Mappings** | Explicit per-URL routing table | ~10 min |
+    | **D — Hosted Pages** | Static landing pages with injected tracking | ~15 min |
+
+    <Tip>
+      If you're unsure where to start, choose **Mode A — Simple Redirect**. It's the fastest to configure and works immediately with any UTM-tagged URL. You can switch modes later if your needs change.
+    </Tip>
+  </Step>
+
+  <Step title="Build your first tracked URL">
+    With your domain active and mode configured, construct your campaign URL by appending UTM parameters to your subdomain:
+
+    ```
+    https://go.yourbrand.com/?utm_source=facebook&utm_medium=paid&utm_campaign=spring-sale
+    ```
+
+    Dáva captures every parameter on the inbound hit and stores it alongside the visit record. You can build URLs manually or use the **URL Builder** tool in the dashboard (go to **Domains → your domain → URL Builder**) to generate properly encoded links without typing parameters by hand.
+  </Step>
+</Steps>
+
+<Note>
+  Before sending any link to a live audience, use the **Test URL** tool to confirm your redirect is working as expected. Go to **Domains → your domain → Test URL**, enter a sample link, and Dáva shows you exactly where the visitor will land and which attribution fields will be recorded.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Redirect Modes" icon="arrow-right-arrow-left" href="/modes/overview">
+    Dive deeper into all four modes and find the right configuration for your campaign structure.
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/tracking/analytics-dashboard">
+    Learn how to read your attribution data, build funnel reports, and measure campaign ROI.
+  </Card>
+</CardGroup>

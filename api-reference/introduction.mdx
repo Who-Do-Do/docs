@@ -1,0 +1,104 @@
+---
+title: "Dáva REST API — Overview & Reference Guide"
+sidebarTitle: "Overview"
+description: "Explore the Dáva REST API for server-side event ingestion and programmatic domain management. All requests require a Bearer API key."
+---
+
+Dáva exposes a REST API for server-side event ingestion and programmatic management of domains, mappings, and gateway pages. Every request must be authenticated with a Bearer API key. The API returns JSON for all responses — both successful results and errors follow a consistent envelope format.
+
+## Base URL
+
+```
+https://api.davazmysel.com
+```
+
+## Response Format
+
+Every response from the Dáva API — success or failure — is a JSON object. The `success` boolean tells you immediately whether the request succeeded; never assume success from the HTTP status code alone.
+
+```json Success response
+{
+  "success": true,
+  "data": { ... },
+  "meta": { "total": 42, "page": 1, "limit": 20 }
+}
+```
+
+```json Error response
+{
+  "success": false,
+  "error": {
+    "code": "DOMAIN_NOT_FOUND",
+    "message": "No domain found with that ID"
+  }
+}
+```
+
+The `meta` object appears on list endpoints and contains pagination details. The `data` object contains the resource or resource array for the request.
+
+## HTTP Status Codes
+
+| Status | Meaning                                      |
+| ------ | -------------------------------------------- |
+| `200`  | Success                                      |
+| `201`  | Created                                      |
+| `202`  | Accepted — request queued for async processing |
+| `400`  | Bad request / validation error               |
+| `401`  | Unauthorized — invalid or missing API key    |
+| `403`  | Forbidden — insufficient permissions         |
+| `404`  | Resource not found                           |
+| `429`  | Rate limit exceeded                          |
+| `500`  | Internal server error                        |
+
+## Rate Limits
+
+Request limits are enforced per API key per minute and vary by plan:
+
+| Plan  | Limit              |
+| ----- | ------------------ |
+| Free  | 100 requests / min |
+| Pro   | 1 000 requests / min |
+
+Every response includes the following headers so you can track your usage in real time:
+
+| Header                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
+| `X-RateLimit-Limit`     | Maximum requests allowed in the current window          |
+| `X-RateLimit-Remaining` | Requests remaining in the current window                |
+| `X-RateLimit-Reset`     | Unix timestamp (seconds) when the window resets         |
+
+When you receive a `429` response, wait until `X-RateLimit-Reset` before retrying.
+
+## Pagination
+
+List endpoints accept `page` and `limit` query parameters. Results are returned in descending `created_at` order by default.
+
+| Parameter | Default | Maximum | Description               |
+| --------- | ------- | ------- | ------------------------- |
+| `page`    | `1`     | —       | Page number to retrieve   |
+| `limit`   | `20`    | `100`   | Number of items per page  |
+
+The `meta` object in every list response includes:
+
+```json
+{
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 150
+  }
+}
+```
+
+Use `total` divided by `limit` to calculate the number of pages.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Create and manage API keys, learn how to pass them in requests, and understand authentication errors.
+  </Card>
+  <Card title="Events API" icon="bolt" href="/api-reference/events/ingest">
+    Ingest single or batched conversion events server-side using POST /v1/events.
+  </Card>
+</CardGroup>

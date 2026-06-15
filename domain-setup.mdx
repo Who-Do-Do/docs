@@ -1,0 +1,140 @@
+---
+title: "Connect and Verify a Subdomain in Dáva: DNS Setup Guide"
+sidebarTitle: "Domain Setup"
+description: "Connect a subdomain to Dáva by adding a CNAME record, then verify DNS propagation. Includes instructions for Cloudflare, Route 53, and GoDaddy."
+---
+
+Connecting a domain to Dáva involves three things: registering your subdomain in the dashboard, adding a CNAME record in your DNS provider, and waiting for Dáva to confirm the record is visible across the public internet. Once all four of Dáva's DNS resolvers detect your CNAME, the domain moves to **Active** status and a TLS certificate is provisioned for it automatically — no manual certificate management required.
+
+## Adding a domain
+
+<Steps>
+  <Step title="Open the Domains section">
+    Log in to [app.davazmysel.com](https://app.davazmysel.com) and click **Domains** in the left navigation, then click **Add Domain**.
+  </Step>
+  <Step title="Enter your subdomain and destination">
+    Fill in two fields:
+    - **Subdomain** — the full subdomain you want Dáva to manage, e.g. `go.yourbrand.com`
+    - **Destination host** — the base URL where traffic should redirect, e.g. `https://yourbrand.com`
+  </Step>
+  <Step title="Create the domain">
+    Click **Create Domain**. Dáva generates your CNAME record details and sets the domain status to **Pending**. Copy the CNAME target value shown — you'll paste it into your DNS provider in the next section.
+  </Step>
+</Steps>
+
+## DNS configuration
+
+Add a CNAME record in your DNS provider using the value Dáva displayed after creation. The record should point your subdomain to `client.davazmysel.com`.
+
+<Tabs>
+  <Tab title="Cloudflare">
+    1. Open your domain in the Cloudflare dashboard and navigate to **DNS → Records**.
+    2. Click **+ Add record**.
+    3. Set **Type** to `CNAME`.
+    4. Set **Name** to your subdomain prefix only — e.g. `go` (Cloudflare appends the zone suffix automatically).
+    5. Set **Target** to `client.davazmysel.com`.
+    6. Set **TTL** to **Auto**.
+    7. Set **Proxy status** to **DNS only** (the cloud icon must be grey, not orange).
+    8. Click **Save**.
+
+    <Warning>
+      Cloudflare's proxy (orange cloud) must be **disabled** for this record. When the proxy is enabled, Cloudflare intercepts HTTPS connections before they reach Dáva, which prevents Dáva from provisioning a TLS certificate and causes verification to fail. Switch the record to **DNS only** (grey cloud) before saving.
+    </Warning>
+  </Tab>
+  <Tab title="Route 53">
+    1. Open the **Route 53** console and go to **Hosted zones → your domain**.
+    2. Click **Create record**.
+    3. Set **Record name** to your full subdomain, e.g. `go.yourbrand.com`.
+    4. Set **Record type** to `CNAME`.
+    5. Set **Value** to `client.davazmysel.com`.
+    6. Set **TTL** to `300`.
+    7. Click **Create records**.
+
+    <Note>
+      Route 53 requires the full subdomain in the **Record name** field, including the zone suffix. Do not drop `.yourbrand.com` — Route 53 does not append it automatically.
+    </Note>
+  </Tab>
+  <Tab title="GoDaddy">
+    1. Go to your domain's **DNS settings** page in GoDaddy.
+    2. Click **Add** and choose **CNAME** as the record type.
+    3. Set **Name** to your subdomain prefix only — e.g. `go` (GoDaddy appends the zone suffix).
+    4. Set **Value** to `client.davazmysel.com`.
+    5. Set **TTL** to **1 hour**.
+    6. Click **Save**.
+  </Tab>
+</Tabs>
+
+## DNS verification
+
+After you save your CNAME record, Dáva automatically begins checking it across four independent public DNS resolvers:
+
+- **Cloudflare** — 1.1.1.1
+- **Google** — 8.8.8.8
+- **Quad9** — 9.9.9.9
+- **OpenDNS** — 208.67.222.222
+
+Checking across multiple resolvers ensures your domain is globally reachable before any campaign traffic hits it. Your domain's status badge in the dashboard reflects what the resolvers are seeing:
+
+| Status | Meaning | What to do |
+|--------|---------|------------|
+| **Pending** | CNAME record not yet detected by any resolver | Add the CNAME record in your DNS provider |
+| **Verifying** | Dáva is actively polling resolvers; no results yet | Wait 1–5 minutes for initial propagation |
+| **Partial** | At least one resolver sees the record, but not all four | Wait for global propagation; no action needed yet |
+| **Active** | All four resolvers confirmed the CNAME; TLS provisioned | Your domain is live and ready to use |
+| **Invalid** | CNAME detected but pointing to the wrong target | Fix the CNAME value in your DNS provider |
+| **Error** | Verification check failed | Review your DNS config and click **Retry Verification** |
+
+To trigger an immediate re-check at any time, go to **Domains → your domain → Settings** and click **Retry Verification**. The status refreshes within 30 seconds.
+
+## Troubleshooting
+
+<Accordion title="My domain is stuck on Verifying or Partial">
+  **Verifying** means Dáva has started polling resolvers but hasn't seen your CNAME yet. **Partial** means at least one resolver sees the record but not all four. Both states usually resolve on their own — this is a propagation delay. Wait 5–15 more minutes and click **Retry Verification**.
+
+  If it remains stuck after 30 minutes, double-check:
+  - The CNAME **value** in your DNS provider matches `client.davazmysel.com` exactly, with no extra characters or trailing dots
+  - You haven't accidentally created an A record or TXT record instead of a CNAME
+  - Your DNS provider hasn't added a trailing dot to the target value (some providers do this automatically and it's fine; others add it incorrectly)
+
+  You can also confirm your CNAME is visible from the command line:
+
+  ```bash
+  nslookup go.yourbrand.com
+  # Should return a CNAME pointing to client.davazmysel.com
+  ```
+</Accordion>
+
+<Accordion title="Cloudflare says DNS-only but I still get an error">
+  Confirm the cloud icon next to the CNAME record in Cloudflare is **grey**, not orange. Clicking the icon toggles between proxied (orange) and DNS-only (grey). Save the record after switching.
+
+  If the icon is already grey and verification is still failing, check that the **Target** field contains exactly `client.davazmysel.com` and that no Page Rules or other Cloudflare settings are overriding the record.
+</Accordion>
+
+<Accordion title="How long does verification take?">
+  For most DNS providers, propagation completes in **1–15 minutes**. However, some registrars — particularly older ones or those with high default TTL values — can take up to 48 hours for changes to propagate globally.
+
+  Dáva re-checks your domain automatically every few minutes. You can also click **Retry Verification** at any time to force an immediate check.
+</Accordion>
+
+<Accordion title="Can I use a root domain (apex) instead of a subdomain?">
+  DNS standards do not allow CNAME records at a zone apex (e.g. `yourbrand.com`) when other records like MX or NS also exist at that level. For this reason, Dáva requires a **subdomain** — e.g. `go.yourbrand.com`, `links.yourbrand.com`, or `track.yourbrand.com`.
+
+  If your DNS provider supports **ALIAS** or **ANAME** records at the apex, contact [support@dava.io](mailto:support@dava.io) to discuss root domain setup. For most use cases, a short subdomain prefix like `go.` is the recommended approach.
+</Accordion>
+
+## Advanced DNS
+
+You can run multiple Dáva domains from a single account — each with its own subdomain, its own redirect mode, and its own analytics. A common multi-domain setup looks like this:
+
+```
+go.yourbrand.com      → Simple Redirect    (paid ads)
+pages.yourbrand.com   → Hosted Pages       (email campaigns)
+track.yourbrand.com   → Manual Mappings    (partner links)
+ref.yourbrand.com     → Structured Passthrough (URL conventions)
+```
+
+Each subdomain needs its own CNAME record in your DNS provider **and** its own domain entry in the Dáva dashboard. They operate independently and report to separate analytics views.
+
+<Note>
+  Dáva automatically provisions and renews TLS certificates for every domain that reaches **Active** status. You don't need to configure certificates, upload files, or run any renewal commands — it's handled entirely by the platform.
+</Note>

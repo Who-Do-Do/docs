@@ -1,0 +1,118 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "luma",
+  "name": "Dáva",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#EEF2FF",
+    "dark": "#312E81"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@davazmysel.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.davazmysel.com"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "domain-setup"
+            ]
+          },
+          {
+            "group": "Redirect Modes",
+            "pages": [
+              "modes/overview",
+              "modes/simple-redirect",
+              "modes/structured-passthrough",
+              "modes/manual-mappings",
+              "modes/hosted-pages"
+            ]
+          },
+          {
+            "group": "Tracking & Analytics",
+            "pages": [
+              "tracking/snippet",
+              "tracking/conversion-funnel",
+              "tracking/analytics-dashboard",
+              "tracking/campaign-spend"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/webhooks",
+              "integrations/shopify",
+              "integrations/stripe",
+              "integrations/other-platforms"
+            ]
+          },
+          {
+            "group": "Account & Team",
+            "pages": [
+              "account/team-management",
+              "account/billing",
+              "account/privacy-gdpr"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Events API",
+            "pages": [
+              "api-reference/events/ingest",
+              "api-reference/events/batch"
+            ]
+          },
+          {
+            "group": "Domain Management",
+            "pages": [
+              "api-reference/domains/list-create",
+              "api-reference/domains/update-delete",
+              "api-reference/domains/dns-verification"
+            ]
+          },
+          {
+            "group": "Mappings & Pages",
+            "pages": [
+              "api-reference/mappings/overview",
+              "api-reference/gateway-pages/overview"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {}
+  }
+}

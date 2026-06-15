@@ -1,0 +1,99 @@
+---
+title: "Simple Redirect: Host-Swap Tracking for Every Campaign"
+sidebarTitle: "Simple Redirect"
+description: "Forward all subdomain traffic to one destination host. Path and query string are preserved automatically — UTM params become attribution fields."
+---
+
+Simple Redirect (Mode A) does one thing well: it swaps the host on every incoming request and forwards the visitor to your destination. The path stays the same, the query string — including all UTM parameters — travels with the visitor untouched, and Dáva extracts attribution from standard UTM fields in the background. There is no mapping table to maintain and no schema to define. If you need a tracked CNAME for a campaign, this is your starting point.
+
+## How it works
+
+When a visitor clicks a link that hits your subdomain, Dáva replaces your subdomain's host with your destination host and immediately redirects the browser. Everything after the host is preserved exactly as received.
+
+**Request:**
+```
+https://go.yourbrand.com/summer-sale?utm_source=facebook&utm_medium=paid&utm_campaign=summer
+```
+
+**Redirect:**
+```
+https://yourbrand.com/summer-sale?utm_source=facebook&utm_medium=paid&utm_campaign=summer
+```
+
+**Attribution captured:**
+- Source: `facebook`
+- Medium: `paid`
+- Campaign: `summer`
+
+Extra query params beyond UTMs — such as `contact_id`, `gclid`, or `ref` — are passed through to the destination unchanged. Dáva records them on the visit event but does not index them as attribution fields unless you configure custom fields.
+
+## Setup
+
+<Steps>
+  <Step title="Choose Mode A — Simple Redirect">
+    Open your subdomain's **Domain Settings**, go to the **Mode** tab, and select **Simple Redirect**.
+  </Step>
+  <Step title="Set your destination host">
+    Enter the host you want all traffic forwarded to — for example, `www.yourbrand.com`. Dáva always uses HTTPS on the outbound request.
+  </Step>
+  <Step title="Set default attribution (optional)">
+    If a visitor arrives without any UTM parameters, Dáva logs the visit with empty attribution fields by default. To override this, set a **Default Attribution**:
+
+    | Field | Example value |
+    |-------|---------------|
+    | Source | `direct` |
+    | Medium | `organic` |
+    | Campaign | `untracked` |
+    | Content | *(leave blank)* |
+
+    Default attribution only applies when no UTMs are present. It is overridden by any UTM values in the actual URL.
+  </Step>
+  <Step title="Save draft, then Publish">
+    Click **Save** to record your changes as a draft, then click **Publish** to make your subdomain live. Use the **Test URL** tool to verify the redirect before publishing.
+  </Step>
+</Steps>
+
+## Building tracked URLs
+
+Append standard UTM parameters to any path on your subdomain to create a tracked URL. Dáva extracts `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, and `utm_term` automatically.
+
+**Manual example:**
+```
+https://go.yourbrand.com/checkout?utm_source=email&utm_medium=newsletter&utm_campaign=spring-sale&utm_content=hero-image
+```
+
+**Dashboard URL Builder:**
+
+Open **Domain Settings → URL Builder**, fill in the path and UTM fields, and Dáva assembles the full URL ready to copy into your campaign tool. The builder also supports additional query parameters beyond UTMs — add them as extra key/value pairs and they will be included in the output.
+
+<Tip>
+  If you use a marketing automation platform like ActiveCampaign or HubSpot, add merge tag placeholders as query parameter values — for example, `contact_id=%CONTACTID%`. The tool resolves these before the link reaches Dáva, so per-recipient context arrives in the query string and is forwarded to your destination intact.
+</Tip>
+
+## Analytics
+
+Every redirect hit appears in **Dashboard → Analytics** within seconds. Break down traffic by:
+
+- **Date range** — day, week, or custom range
+- **Source / Medium / Campaign / Content** — the four standard UTM attribution dimensions
+- **Scanner filter** — toggle to exclude known bot and security-scanner traffic from your counts
+
+## Limitations
+
+<Note>
+  Mode A uses a single destination host for the entire subdomain. If you need different destination URLs for different paths, use [Mode C — Manual Mappings](/modes/manual-mappings). If your attribution is encoded in the URL path rather than UTM params, use [Mode B — Structured Passthrough](/modes/structured-passthrough).
+</Note>
+
+## FAQ
+
+<Accordion title="What happens if UTM params conflict with existing query params on the destination?">
+  Dáva appends inbound query parameters to the destination URL. If both the inbound URL and the destination already have the same key — for example, both have `utm_source` — the inbound value is appended alongside the destination's value. Most analytics platforms take the last occurrence, so the inbound UTM wins. Dáva always records the UTM values from the inbound URL regardless of what the destination does with them.
+</Accordion>
+
+<Accordion title="Can I set custom attribution without using UTM params?">
+  Yes. Set **Default Attribution** in the Mode A configuration. These values are applied to every visit that arrives without UTM parameters. If you want per-link attribution without UTMs, consider [Mode C — Manual Mappings](/modes/manual-mappings), where each mapping row carries its own attribution fields independently of query params.
+</Accordion>
+
+<Accordion title="Does Mode A strip or modify the query string?">
+  No. The entire query string is preserved and forwarded to the destination exactly as received. Dáva reads UTM values for attribution logging but does not remove, reorder, or alter any query parameters in the redirected URL.
+</Accordion>

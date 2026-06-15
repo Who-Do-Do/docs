@@ -1,0 +1,49 @@
+---
+title: "How Dáva Works: Redirect Modes, Attribution, and Analytics"
+sidebarTitle: "Introduction"
+description: "Dáva is a redirect management and attribution platform. Learn what problems it solves, how the platform works, and what you can measure."
+---
+
+Without unique, tracked links, you're guessing which traffic source is actually driving results. You can see total conversions, but you can't tell whether they came from your email campaign, your paid social ads, or a partner referral — and you can't optimize what you can't measure. Dáva solves this by giving you a subdomain you control (e.g. `go.yourbrand.com`) that every campaign link runs through, automatically capturing attribution, device, and geo data on every single click before passing the visitor on to your destination.
+
+## How Dáva works
+
+You point a subdomain at Dáva using a CNAME record, then configure how traffic should be routed. From that point on, every request to that subdomain passes through Dáva's edge network. Dáva reads the URL — UTM parameters, path segments, or a static mapping — records a hit with full attribution context, and redirects the visitor to your destination in milliseconds. TLS certificates are provisioned automatically, so your subdomain is always served over HTTPS.
+
+The platform checks DNS propagation across four independent public resolvers (Cloudflare, Google, Quad9, and OpenDNS) before marking your domain active, ensuring your links are globally reachable before you go live.
+
+## Four redirect modes
+
+Every domain in Dáva runs in exactly one mode. Choose the mode that matches how your campaigns are structured.
+
+<CardGroup cols={2}>
+  <Card title="Mode A: Simple Redirect" icon="arrow-right" href="/modes/simple-redirect">
+    Swap the host on incoming URLs and pass UTM parameters straight through. The fastest mode to set up — ideal for paid ads and email campaigns.
+  </Card>
+  <Card title="Mode B: Structured Passthrough" icon="sitemap" href="/modes/structured-passthrough">
+    Define a URL convention (e.g. `/ref/{brand}/{channel}/{campaign}`) and map path segments to attribution fields automatically.
+  </Card>
+  <Card title="Mode C: Manual Mappings" icon="list" href="/modes/manual-mappings">
+    Create an explicit table of inbound URLs and their destinations. Gives you granular per-URL control for complex campaign structures.
+  </Card>
+  <Card title="Mode D: Hosted Pages" icon="file-code" href="/modes/hosted-pages">
+    Upload static HTML/CSS/JS files and let Dáva serve them with the tracking snippet automatically injected.
+  </Card>
+</CardGroup>
+
+## What you can measure
+
+Every hit recorded by Dáva includes the full UTM attribution set (source, medium, campaign, term, content), device type, operating system, browser, and geographic location. In the analytics dashboard you can break down traffic by any of these dimensions, track visitors through multi-step funnel stages, and compare campaign spend against attributed conversions to calculate ROI.
+
+For teams that need data outside the Dáva dashboard, webhook integrations let you push visit events in real time to your CRM, data warehouse, or any HTTP endpoint — so attribution data flows directly into the tools you already use to make decisions.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Add your first domain and send your first tracked campaign link in five minutes.
+  </Card>
+  <Card title="Domain Setup" icon="globe" href="/domain-setup">
+    Detailed instructions for adding a subdomain, configuring your CNAME, and passing DNS verification.
+  </Card>
+</CardGroup>

@@ -1,0 +1,55 @@
+---
+title: "Redirect Modes: Choose the Right Setup for Your Subdomain"
+sidebarTitle: "Overview"
+description: "Each subdomain in Dáva runs one redirect mode. Compare Simple Redirect, Structured Passthrough, Manual Mappings, and Hosted Pages to find the right fit."
+---
+
+Every subdomain you create in Dáva operates in exactly one redirect mode. The mode you choose determines how incoming traffic is matched, how attribution is captured, and where visitors are sent. You can switch modes after setup, but switching clears all configuration on that subdomain — so pick the mode that fits your use case before you start building.
+
+## Mode comparison
+
+| Mode | Name | Best for | Setup time |
+|------|------|----------|------------|
+| **A** | Simple Redirect | Ad campaigns, email sends — one destination host, UTM-based attribution | ~2 minutes |
+| **B** | Structured Passthrough | Teams with a defined URL convention — attribution encoded in path segments | ~10 minutes |
+| **C** | Manual Mappings | Granular per-URL control — exact match and glob patterns, per-URL destinations | Varies by campaign size |
+| **D** | Hosted Pages | Email and SMS campaigns — Dáva serves your HTML page and fires a tracking pixel client-side, blocking scanner inflation | ~15 minutes |
+
+<CardGroup cols={2}>
+  <Card title="Simple Redirect" icon="arrow-right" href="/modes/simple-redirect">
+    Swap the host and forward all traffic to one destination. Path and query string — including UTM params — are preserved automatically.
+  </Card>
+  <Card title="Structured Passthrough" icon="list-tree" href="/modes/structured-passthrough">
+    Define a URL convention like `/{source}/{medium}/{campaign}` and Dáva parses each path segment into attribution fields.
+  </Card>
+  <Card title="Manual Mappings" icon="table" href="/modes/manual-mappings">
+    Create one mapping per URL path. Supports exact match and glob patterns, each with its own destination and optional attribution override.
+  </Card>
+  <Card title="Hosted Pages" icon="file-code" href="/modes/hosted-pages">
+    Host static HTML on your subdomain. Dáva injects a tracking pixel so visits are recorded after a real browser loads the page — not during pre-scan.
+  </Card>
+</CardGroup>
+
+## Draft & Publish
+
+Every configuration change you make in Dáva is saved as a **draft** first. Nothing goes live until you click **Publish**. This means you can safely adjust your destination host, reorder mappings, or tweak your URL schema without affecting live traffic while you work.
+
+When you publish, Dáva records the change in an **audit log** on the Domain Settings page. The log shows who published, when, and what changed — so you have a full history of every version that has ever been live on that subdomain. You can review previous versions at any time.
+
+<Tip>
+  Before publishing, use the Test URL tool to validate your changes against the draft config. Only promote to live once you're confident the output looks right.
+</Tip>
+
+<Warning>
+  Switching a subdomain to a different mode permanently deletes the existing mode's configuration — including all mappings, schemas, or uploaded files. Export any data you need before switching. If you want to keep the old configuration intact, create a new subdomain in the new mode instead.
+</Warning>
+
+## Test URL tool
+
+Every subdomain has a **Test URL** panel on its Domain Settings page. Paste any URL into the input field and Dáva tells you:
+
+- **Which rule matched** — the exact mapping, prefix, or mode logic that fired
+- **What attribution was captured** — source, medium, campaign, content, and any custom fields
+- **Where the visitor would land** — the final destination URL, fully resolved with all path and query substitutions applied
+
+The test runs against your current **published** config by default. Toggle to **Draft** to preview unpublished changes before you go live. No real traffic is generated — it's a pure simulation.

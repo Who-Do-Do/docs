@@ -1,0 +1,132 @@
+{
+  "projectType": "saas",
+  "projectName": "Dáva",
+  "projectDescription": "A redirect management and conversion tracking platform that lets you CNAME your domains, choose from four redirect modes, and measure traffic attribution and funnel performance in one dashboard.",
+  "theme": "luma",
+  "primaryColor": "#6366F1",
+  "lightColor": "#EEF2FF",
+  "darkColor": "#312E81",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "domain-setup"
+            ]
+          },
+          {
+            "group": "Redirect Modes",
+            "pages": [
+              "modes/overview",
+              "modes/simple-redirect",
+              "modes/structured-passthrough",
+              "modes/manual-mappings",
+              "modes/hosted-pages"
+            ]
+          },
+          {
+            "group": "Tracking & Analytics",
+            "pages": [
+              "tracking/snippet",
+              "tracking/conversion-funnel",
+              "tracking/analytics-dashboard",
+              "tracking/campaign-spend"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/webhooks",
+              "integrations/shopify",
+              "integrations/stripe",
+              "integrations/other-platforms"
+            ]
+          },
+          {
+            "group": "Account & Team",
+            "pages": [
+              "account/team-management",
+              "account/billing",
+              "account/privacy-gdpr"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Events API",
+            "pages": [
+              "api-reference/events/ingest",
+              "api-reference/events/batch"
+            ]
+          },
+          {
+            "group": "Domain Management",
+            "pages": [
+              "api-reference/domains/list-create",
+              "api-reference/domains/update-delete",
+              "api-reference/domains/dns-verification"
+            ]
+          },
+          {
+            "group": "Mappings & Pages",
+            "pages": [
+              "api-reference/mappings/overview",
+              "api-reference/gateway-pages/overview"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Four redirect modes: Simple Redirect, Structured Passthrough, Manual Mappings, and Hosted Pages",
+    "Custom domain CNAME setup with automatic TLS certificate provisioning",
+    "JavaScript tracking snippet (t.js) for pageview and conversion event collection",
+    "Multi-resolver DNS verification across Cloudflare, Google, Quad9, and OpenDNS",
+    "Conversion funnel configuration with Cold, Warm, and Conversion page classification",
+    "UTM parameter parsing and attribution tracking across all redirect modes",
+    "Campaign spend tracking with CPL, CPHL, and CPA calculator",
+    "Inbound webhook receivers for Shopify, Stripe, HubSpot, ActiveCampaign, Mailchimp, Klaviyo, and Zapier",
+    "Public REST API for server-side event ingestion (single and batch)",
+    "Team management with owner, admin, and member roles",
+    "Config draft/publish workflow with audit log and version history",
+    "Bot and scanner traffic filtering",
+    "Test/Preview tool to simulate redirects without live traffic",
+    "GDPR compliance: right-to-delete, right-to-access, configurable data retention"
+  ],
+  "publicApiSurface": [
+    "POST /v1/events — ingest a single conversion or pageview event",
+    "POST /v1/events/batch — ingest up to 1000 events asynchronously",
+    "GET /v1/events/batch/:job_id — poll batch job status",
+    "GET /domains — list domains",
+    "POST /domains — add a domain",
+    "PATCH /domains/:id — update domain settings",
+    "DELETE /domains/:id — remove a domain",
+    "GET /domains/:id/dns-status — get DNS verification status",
+    "POST /domains/:id/check-status — trigger DNS re-check",
+    "GET /mappings — list URL mappings",
+    "POST /mappings — create a URL mapping",
+    "PATCH /mappings/:id — update a mapping",
+    "DELETE /mappings/:id — soft-delete a mapping",
+    "POST /api/accounts/:account_id/api-keys — create API key",
+    "GET /api/accounts/:account_id/api-keys — list API keys",
+    "POST /api/accounts/:account_id/api-keys/:id/revoke — revoke key",
+    "POST /api/accounts/:account_id/api-keys/:id/rotate — rotate key",
+    "POST /domains/:id/test-url — preview redirect behavior"
+  ]
+}

@@ -1,0 +1,105 @@
+---
+title: "Manual Mappings: Per-URL Redirect and Attribution Control"
+sidebarTitle: "Manual Mappings"
+description: "Create one mapping per URL path using exact match or glob patterns. Each mapping has its own destination URL and optional attribution override."
+---
+
+Manual Mappings (Mode C) gives you explicit, row-by-row control over every redirect your subdomain handles. You define each inbound path — either as an exact match or a glob pattern — and pair it with a destination URL and optional attribution fields. This is the right choice when your URLs don't follow a shared convention, when different paths need to reach different destinations, or when your team needs a clear audit trail of exactly which URL goes where.
+
+## Adding mappings
+
+<Steps>
+  <Step title="Enable Mode C — Manual Mappings">
+    Open your subdomain's **Domain Settings**, go to the **Mode** tab, and select **Manual Mappings**.
+  </Step>
+  <Step title="Click Add Mapping">
+    Navigate to **Domain Settings → Mappings** and click **+ Add Mapping** to open the mapping form.
+  </Step>
+  <Step title="Enter the inbound path">
+    Type the path you want to match — either as an exact path (e.g. `/summer-sale`) or a glob pattern (e.g. `/campaign/**`). See [Exact vs glob patterns](#exact-vs-glob-patterns) below for syntax details.
+  </Step>
+  <Step title="Set the destination URL">
+    Enter the full URL where visitors should be redirected — for example, `https://shop.yourbrand.com/summer-sale`. If you leave this blank, the mapping uses the subdomain's default destination.
+  </Step>
+  <Step title="Set attribution (optional)">
+    Override attribution for this specific mapping by entering Source, Medium, Campaign, and Content values. These take precedence over any UTM parameters in the inbound URL for analytics purposes — the UTMs are still forwarded to the destination, but the mapping's attribution is what Dáva records.
+  </Step>
+  <Step title="Save draft, then Publish">
+    Click **Save** to add the mapping to your draft. Repeat for each additional mapping. When you're ready to go live, click **Publish**. Use the **Test URL** tool to verify any mapping before publishing.
+  </Step>
+</Steps>
+
+## Exact vs glob patterns
+
+**Exact match** requires the inbound path to match the configured value character-for-character. It is the default and the most predictable option.
+
+**Glob patterns** use `*` and `**` wildcards to match multiple URL variants with a single rule.
+
+| Pattern | Matches | Does not match |
+|---------|---------|----------------|
+| `/summer-sale` | `/summer-sale` | `/summer-sale/details` |
+| `/campaign/**` | `/campaign/spring`, `/campaign/spring/offer/details` | `/campaign` (no trailing segment) |
+| `/ref/{brand}/**` | `/ref/youtube/details`, `/ref/google/offer/landing` | `/ref` |
+| `/ac/*` | `/ac/abc123`, `/ac/xyz789` | `/ac/foo/bar` (two segments) |
+
+**Dynamic placeholders** let you capture a named segment from a glob pattern and reuse it in the destination URL:
+
+```
+Pattern:     /ref/{brand}/**
+Destination: https://shop.yourbrand.com/partners/{brand}{path}
+
+Visitor URL: https://go.yourbrand.com/ref/youtube/spring-offer
+Redirects to: https://shop.yourbrand.com/partners/youtube/ref/youtube/spring-offer
+```
+
+Use `{path}` in the destination to insert the full matched path, or a captured segment name to insert just that value.
+
+## Default destination
+
+<Note>
+  Set a **Default Destination** in your Domain Settings to handle any path that doesn't match a mapping. Without a default, unmatched paths return a 404. The default destination also acts as a fallback for any mapping row that has no destination set.
+</Note>
+
+## Query string handling
+
+Dáva appends the inbound URL's query parameters to the destination URL by default. This means per-recipient IDs, UTM params, click IDs, and any other query values travel through the redirect automatically.
+
+**Example:**
+
+```
+Mapping destination: https://shop.yourbrand.com/offer
+
+Visitor arrives at:  https://go.yourbrand.com/summer-sale?contact_id=123&utm_source=email
+
+Redirects to:        https://shop.yourbrand.com/offer?contact_id=123&utm_source=email
+```
+
+## Managing mappings
+
+**Edit a mapping** — click the **Edit** icon on any row in the Mappings table, update the fields, and save. The change is saved as a draft until you publish.
+
+**Delete a mapping** — click the **Delete** icon to soft-delete the mapping. It is immediately deactivated for new traffic, but Dáva keeps the record for 30 days so historical analytics remain intact.
+
+**Restore a deleted mapping** — go to **Mappings → Show Deleted**, find the mapping you want to recover, and click **Restore**. After 30 days, deleted mappings are archived and can no longer be restored from the dashboard.
+
+<Tip>
+  To export all your current mappings before making bulk changes, click **Export** in the Mappings table. Dáva downloads a CSV with every active mapping, including destination URLs and attribution fields.
+</Tip>
+
+## FAQ
+
+<Accordion title="How does glob priority work when multiple patterns could match?">
+  Dáva matches in order of specificity: exact matches are evaluated first, then glob patterns from most specific to least specific. More specific patterns — those with longer fixed prefixes or fewer wildcards — take priority over broader ones. Within patterns of equal specificity, you can manually reorder rows by dragging them in the Mappings table to control which rule fires first.
+</Accordion>
+
+<Accordion title="Can I bulk-import mappings from a spreadsheet?">
+  Bulk CSV import is coming soon. When it ships, you'll upload a file with one row per mapping in the format: `inbound_path, destination, source, medium, campaign, content`. In the meantime, use the **+ Add Mapping** form for each row, or contact support if you need to migrate a large existing mapping table.
+</Accordion>
+
+<Accordion title="How do I export my mappings?">
+  Click **Export** in the **Mappings** tab. Dáva generates a CSV of all active mappings, including their inbound paths, destination URLs, and attribution fields. Deleted mappings are not included in the export — restore them first if you need them.
+</Accordion>
+
+<Accordion title="What happens to traffic that doesn't match any mapping?">
+  If a visitor arrives at a path with no matching mapping, Dáva redirects them to the **Default Destination** you set for the subdomain. If no default destination is configured, the visitor receives a 404 response. Set a default destination in **Domain Settings** to ensure all traffic reaches a known page.
+</Accordion>

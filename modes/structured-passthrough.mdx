@@ -1,0 +1,137 @@
+---
+title: "Structured Passthrough: Path-Encoded URL Attribution"
+sidebarTitle: "Structured Passthrough"
+description: "Define a URL convention where path segments carry attribution data. Dáva parses each segment automatically — no UTM params or mapping tables required."
+---
+
+Structured Passthrough (Mode B) is built for teams that already follow a URL convention where attribution is baked into the path itself. Instead of appending `?utm_source=...` to every link, you encode attribution directly in the URL structure — for example, `/facebook/paid/spring-sale/uk-audience`. Dáva reads your convention, parses each segment into the correct attribution field, and forwards the visitor to your destination using a template you define. No mapping tables, no manual rows, no UTM parameters required.
+
+## Example URL
+
+Given the convention `/{source}/{medium}/{campaign}/{content}`, an inbound URL like:
+
+```
+https://go.yourbrand.com/facebook/paid/spring-sale/uk-audience
+```
+
+is parsed as:
+
+| Segment position | Value | Attribution field |
+|------------------|-------|-------------------|
+| 1 | `facebook` | Source |
+| 2 | `paid` | Medium |
+| 3 | `spring-sale` | Campaign |
+| 4 | `uk-audience` | Content |
+
+Dáva then redirects to your destination template — for example, `https://yourbrand.com/{campaign}` resolves to `https://yourbrand.com/spring-sale` — and logs the visit with full attribution extracted from the path.
+
+## Setup
+
+<Steps>
+  <Step title="Enable Mode B — Structured Passthrough">
+    Open your subdomain's **Domain Settings**, go to the **Mode** tab, and select **Structured Passthrough**.
+  </Step>
+  <Step title="Define your URL convention">
+    Enter the inbound path pattern your URLs follow. Use `{segment_name}` placeholders for each variable position:
+
+    ```
+    /{source}/{medium}/{campaign}/{content}
+    ```
+
+    If your URLs begin with a fixed prefix — such as `/ref/` — include it literally:
+
+    ```
+    /ref/{brand}/{channel}/{medium}/{campaign}/{creative}
+    ```
+
+    Dáva validates that all incoming paths match this structure before parsing attribution from them.
+  </Step>
+  <Step title="Map each segment to an attribution field">
+    For every `{placeholder}` in your convention, choose what it maps to:
+
+    - **Standard fields:** Source, Medium, Campaign, Content, Term
+    - **Custom fields:** any label you define (e.g. `brand`, `funnel_stage`, `creative`)
+
+    Custom fields appear in your analytics breakdown alongside the standard dimensions.
+  </Step>
+  <Step title="Configure your destination template">
+    Enter the URL template Dáva should redirect visitors to. Use `{path}` to forward the entire inbound path, `{query}` for the query string, or individual segment names to embed specific values:
+
+    ```
+    https://yourbrand.com/step-1{path}{query}
+    ```
+
+    With an inbound URL of `/ref/facebook/paid/spring-sale/hero?contact_id=123`, this resolves to:
+
+    ```
+    https://yourbrand.com/step-1/ref/facebook/paid/spring-sale/hero?contact_id=123
+    ```
+
+    You can also embed a single segment — for example, `https://yourbrand.com/{campaign}` — to route traffic to a campaign-specific landing page.
+  </Step>
+  <Step title="Set fallback behavior">
+    Decide what happens when a URL hits your subdomain but does not match the convention:
+
+    - **Passthrough without parsing** — forward the request to the destination host with path and query preserved, but do not attempt attribution extraction
+    - **Send to default destination** — redirect to the destination host only, ignoring the inbound path entirely
+
+    The passthrough option is useful for legacy URLs or one-off paths that don't conform to your schema. The default destination option is safer when you want malformed URLs to reach a known page.
+  </Step>
+  <Step title="Save draft, then Publish">
+    Click **Save** to record your changes as a draft. Use the **Test URL** tool to paste a sample URL and confirm the parsed attribution and destination resolve correctly. Click **Publish** when you're satisfied.
+  </Step>
+</Steps>
+
+## URL Builder
+
+The dashboard's built-in **URL Builder** is the companion to Structured Passthrough. Open it from **Domain Settings → URL Builder**, fill in each schema field — Brand, Channel, Campaign, Creative, and so on — and Dáva assembles the correctly formatted URL ready to paste into your campaign tool or automation platform.
+
+The URL Builder enforces your convention at the point of creation. Use it to eliminate typos and ensure every URL your team generates is parseable by Dáva.
+
+<Tip>
+  For marketing automation tools like ActiveCampaign, add personalisation query parameters in the URL Builder's extra fields — for example, `contact_id = %CONTACTID%`. The builder embeds these as literals that the automation tool resolves at send time.
+</Tip>
+
+## Optional segments
+
+<Note>
+  If some of your URLs have fewer segments than the full convention — for example, a legacy `/ref/gmb` with only one segment — Dáva applies the fallback behavior you configured in step 5. URLs that match the prefix but don't satisfy the full schema are handled by the fallback rather than causing an error. Contact support to configure per-segment default values for partially-populated paths.
+</Note>
+
+## Advanced: destination template variables
+
+Your destination template supports two types of variables:
+
+- **`{path}`** — the full inbound path, including the prefix and all segments
+- **`{query}`** — the full inbound query string, including the leading `?`
+- **`{segment_name}`** — the value of any named segment from your convention
+
+Combining them gives you fine-grained control:
+
+```
+https://yourbrand.com/offers/{campaign}?channel={source}&{query}
+```
+
+With `/facebook/paid/spring-sale/hero?contact_id=123`, this resolves to:
+
+```
+https://yourbrand.com/offers/spring-sale?channel=facebook&contact_id=123
+```
+
+<Note>
+  When a URL contains both path-encoded attribution and UTM parameters, path segment values take precedence. Dáva records UTM values as supplementary data and forwards them to the destination unchanged, but the attribution logged for analytics always comes from the path segments. This makes your attribution more reliable — path segments cannot be stripped by browser privacy tools or ad-platform injection errors the way query params can.
+</Note>
+
+## FAQ
+
+<Accordion title="Can I use dots or underscores in segment values?">
+  Yes. Underscores are fully supported in segment values and are a common choice for multi-word values — for example, `spring_sale` or `uk_audience`. Dots are also accepted. Hyphens are recommended for readability in URLs, but the choice is yours as long as you apply it consistently across your team's convention.
+</Accordion>
+
+<Accordion title="What if a segment contains special characters or spaces?">
+  URL encoding is handled automatically. If a segment value contains a space, an ampersand, or any other character that must be percent-encoded in a URL, Dáva decodes it before matching against your schema and re-encodes it correctly when assembling the destination URL. You do not need to encode values manually in the URL Builder.
+</Accordion>
+
+<Accordion title="Can I use multiple path prefixes with different schemas?">
+  Yes. You can configure multiple prefix rules on a single Structured Passthrough subdomain — for example, `/ref/{brand}/{campaign}/...` for one campaign type and `/promo/{medium}/{campaign}/...` for another. Each prefix has its own segment schema and destination template. Contact support to configure multi-prefix setups.
+</Accordion>

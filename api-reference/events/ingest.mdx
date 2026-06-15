@@ -1,0 +1,129 @@
+---
+title: "Ingest a Single Event via the Dáva Events API"
+sidebarTitle: "POST /v1/events"
+description: "Send a single conversion or pageview event server-side with POST /v1/events. Ideal for backend-triggered conversions such as completed purchases."
+---
+
+`POST /v1/events` ingests a single conversion or pageview event server-side. Use this endpoint for backend-triggered conversions — for example, a purchase that completes on your server after payment confirmation. Because the call originates from your server, it bypasses ad-blockers and browser-side tracking restrictions that would otherwise drop the event.
+
+## Endpoint
+
+```
+POST https://api.davazmysel.com/v1/events
+```
+
+## Request Parameters
+
+<ParamField body="subdomain" type="string" required>
+  The subdomain of the Dáva domain that handled the inbound traffic (e.g. `go` for `go.yourdomain.com`). This tells Dáva which domain configuration to attribute the event to.
+</ParamField>
+
+<ParamField body="event_type" type="string" required>
+  The type of event being recorded. Accepted values:
+
+  - `pageview` — a page was viewed
+  - `form_submit` — a form was submitted
+  - `click` — a tracked element was clicked
+  - `conversion` — a goal was completed (e.g. purchase, sign-up)
+  - `send` — a message or communication was sent
+  - `custom_event` — any other event type you define
+</ParamField>
+
+<ParamField body="anonymous_id" type="string">
+  The visitor's anonymous ID read from the Dáva first-party cookie (`_dava_anon`). Max 128 characters. Providing this links the server-side event to an existing visitor session and ensures attribution is credited to the correct traffic source.
+</ParamField>
+
+<ParamField body="contact_id" type="string">
+  Your internal user or contact ID (e.g. a CRM ID or database primary key). Max 128 characters. Use this to link the event to a known user in your own system.
+</ParamField>
+
+<ParamField body="external_id" type="string">
+  An ID from an external platform, such as a Shopify customer ID or Stripe customer ID. Max 128 characters. Useful for cross-platform attribution matching.
+</ParamField>
+
+<ParamField body="hashed_email" type="string">
+  A SHA-256 hex digest of the user's email address, normalised to lowercase and trimmed of whitespace before hashing. Must be exactly 64 lowercase hex characters (e.g. `a665a45920422f9d417e4867efdc4fb8...`). Used for privacy-safe identity resolution across sessions and devices.
+</ParamField>
+
+<ParamField body="properties" type="object">
+  Arbitrary key-value metadata to attach to the event. Use this to pass revenue values, product names, or any other context that helps with downstream analysis.
+
+  ```json
+  { "value": 99.00, "currency": "USD", "product": "Pro Plan" }
+  ```
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/v1/events \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subdomain": "go",
+    "hashed_email": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "event_type": "conversion",
+    "properties": { "value": 99.00, "currency": "USD" }
+  }'
+```
+
+## Response
+
+Returns `201 Created` on success:
+
+```json
+{
+  "success": true,
+  "data": {
+    "event_id": "550e8400-e29b-41d4-a716-446655440000",
+    "deduped": false,
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+<ResponseField name="success" type="boolean">
+  `true` when the event was accepted and queued for processing.
+</ResponseField>
+
+<ResponseField name="data.event_id" type="string">
+  The unique UUID assigned to the ingested event. Store this if you need to reference the event later.
+</ResponseField>
+
+<ResponseField name="data.deduped" type="boolean">
+  `true` if Dáva detected this as a duplicate of a recently ingested event and skipped re-processing. The event was still accepted but not double-counted.
+</ResponseField>
+
+<ResponseField name="data.created_at" type="string">
+  ISO 8601 timestamp of when the event was recorded.
+</ResponseField>
+
+<Tip>
+  Include `anonymous_id` or `hashed_email` whenever possible. These identifiers allow Dáva to link the server-side event to an existing visitor session and correctly attribute the conversion to the originating traffic source — without them, the event may be recorded without attribution.
+</Tip>
+
+## Computing a Hashed Email
+
+Hash the email address client-side or server-side before sending it to Dáva. Always normalise to lowercase and trim whitespace before hashing to ensure consistent matching across events.
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript
+    const crypto = require('crypto');
+
+    const hashedEmail = crypto
+      .createHash('sha256')
+      .update(email.toLowerCase().trim())
+      .digest('hex');
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import hashlib
+
+    hashed_email = hashlib.sha256(
+      email.lower().strip().encode()
+    ).hexdigest()
+    ```
+  </Tab>
+</Tabs>

@@ -1,0 +1,89 @@
+---
+title: "Authenticating Requests to the Dáva API"
+sidebarTitle: "Authentication"
+description: "All Dáva API requests require a Bearer API key in the Authorization header. Learn how to create, rotate, revoke, and secure your keys."
+---
+
+Every request to the Dáva API must include an API key passed as a Bearer token in the `Authorization` header. You create and manage keys inside the dashboard — there is no separate developer portal. A key grants access to the account it was created under, so treat it with the same care as a password.
+
+## Creating an API Key
+
+<Steps>
+  <Step title="Open API Keys settings">
+    In the Dáva dashboard, navigate to **Settings** → **API Keys**, then click **Create Key**.
+  </Step>
+  <Step title="Name your key">
+    Give the key a descriptive name that identifies where it will be used — for example, `Production server` or `Data pipeline`. Names help you audit which integration is making requests.
+  </Step>
+  <Step title="Copy the key immediately">
+    After creation, the plaintext key is shown **only once**. Copy it before closing the dialog — you cannot retrieve it again from the dashboard.
+  </Step>
+  <Step title="Store it securely">
+    Paste the key into an environment variable or a secret manager (e.g. AWS Secrets Manager, HashiCorp Vault, Doppler). Never hardcode it in source files.
+  </Step>
+</Steps>
+
+## Using the API Key
+
+Pass the key in the `Authorization` header as a Bearer token on every request:
+
+```bash
+curl https://api.davazmysel.com/v1/events \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+Replace `YOUR_API_KEY` with the key you copied from the dashboard. The header format is case-sensitive — use `Authorization` with a capital A.
+
+## Rotating a Key
+
+Rotation issues a new key and immediately invalidates the old one. Use this when a key has been accidentally exposed or as part of a regular security rotation schedule.
+
+Navigate to **Settings** → **API Keys**, find the key you want to rotate, and click **Rotate**. Copy the new plaintext key before closing the dialog — it is displayed only once.
+
+<Warning>
+  All requests using the old key will start receiving `401 Unauthorized` responses the moment you confirm rotation. Update every integration that uses the key before rotating.
+</Warning>
+
+## Revoking a Key
+
+Revoking permanently deactivates a key with no way to reverse it. Use revocation when an integration is decommissioned or a key is confirmed compromised.
+
+Navigate to **Settings** → **API Keys**, find the key, and click **Revoke**. The key stops working immediately.
+
+## Key Usage Stats
+
+Click any key in **Settings** → **API Keys** to view its request history. The stats panel shows:
+
+- Total requests in the **last 30 days**
+- Total requests in the **last 7 days**
+- A **per-day breakdown** for the past 30 days
+
+Use this to spot unexpected traffic spikes, confirm that a new integration is calling the API as expected, or verify that a deprecated key has gone quiet before revoking it.
+
+<Warning>
+  Never expose your API key in client-side JavaScript, mobile app bundles, or public repositories. If a key is accidentally committed to a public repo, revoke it immediately and issue a new one. Use environment variables or a dedicated secret manager in all server-side deployments.
+</Warning>
+
+## Authentication Errors
+
+When a request is rejected due to a missing or invalid key, the API returns:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+
+Common causes:
+
+| Symptom                          | Likely cause                                              |
+| -------------------------------- | --------------------------------------------------------- |
+| `401` on every request           | Key is missing, malformed, or was revoked / rotated       |
+| `401` after a recent change      | Old key still in use — update to the new rotated key      |
+| `403` on specific endpoints      | Key does not have permission for that resource or account |

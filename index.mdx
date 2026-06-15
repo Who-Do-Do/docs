@@ -1,0 +1,55 @@
+---
+title: "Dáva: Campaign Link Tracking and Redirect Management"
+sidebarTitle: "Home"
+description: "Track every click, map every URL, and measure your funnel — all from one dashboard. Dáva turns your subdomains into fully attributed redirect links."
+---
+
+Dáva is the redirect management and conversion tracking platform built for marketers who need to know exactly which traffic source is driving results. You CNAME a subdomain to Dáva, choose how you want traffic routed, and every click that passes through is captured with full UTM attribution, device data, and geo context — no code changes on your destination site required. Whether you're running paid ads, email campaigns, or affiliate programs, Dáva gives you one place to manage your links and measure what's working.
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Learn what Dáva is, how it works, and which redirect mode fits your campaigns.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Add your first tracked subdomain and send your first attributed campaign link in five minutes.
+  </Card>
+  <Card title="Redirect Modes" icon="arrow-right-arrow-left" href="/modes/overview">
+    Compare Simple Redirect, Structured Passthrough, Manual Mappings, and Hosted Pages.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Manage domains, mappings, and analytics programmatically with the Dáva REST API.
+  </Card>
+</CardGroup>
+
+## How onboarding works
+
+From sign-up to your first live tracked link, there are four steps. Most teams complete the whole flow in under ten minutes.
+
+<Steps>
+  <Step title="Create your account">
+    Go to [app.davazmysel.com](https://app.davazmysel.com) and sign up with your email. Verify your address, and you're in.
+  </Step>
+  <Step title="Add a domain and point your CNAME">
+    In the dashboard, go to **Domains → Add Domain**. Enter a subdomain (e.g. `go.yourbrand.com`) and a destination host. Then add a CNAME record in your DNS provider pointing your subdomain to `client.davazmysel.com`. Dáva verifies propagation automatically across four public resolvers.
+  </Step>
+  <Step title="Pick a redirect mode">
+    Choose how Dáva should route traffic through your subdomain — Simple Redirect for straightforward host-swaps, Structured Passthrough for URL-convention attribution, Manual Mappings for per-URL control, or Hosted Pages for static landing pages with built-in tracking.
+  </Step>
+  <Step title="Send your first campaign">
+    Build a tracked URL using your verified subdomain and UTM parameters, drop it into your campaign, and watch attributed visits arrive in real time on your analytics dashboard.
+  </Step>
+</Steps>
+
+## Explore the platform
+
+<CardGroup cols={3}>
+  <Card title="Tracking" icon="chart-line" href="/tracking/snippet">
+    Understand how Dáva captures UTM parameters, device data, and funnel events on every hit.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/integrations/webhooks">
+    Push visit events to your CRM, data warehouse, or analytics stack via webhooks.
+  </Card>
+  <Card title="Team" icon="users" href="/account/team-management">
+    Invite colleagues, assign roles, and manage access to your Dáva account.
+  </Card>
+</CardGroup>

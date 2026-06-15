@@ -1,0 +1,194 @@
+---
+title: "Managing Hosted Gateway Pages via the Dáva API"
+sidebarTitle: "Gateway Pages"
+description: "Upload HTML files, list active files, browse version history, and roll back to previous versions for Mode D domains using the Dáva API."
+---
+
+The Gateway Pages API manages file uploads for domains running in **Hosted Pages** mode (Mode D). Upload HTML, CSS, JavaScript, and image files directly via the API, and Dáva serves them at your domain without any additional hosting infrastructure. Every upload creates an immutable version snapshot — roll back to any previous version instantly if a new deployment causes issues.
+
+## Upload Files
+
+Upload one or more files to a domain. Every upload creates a new version and immediately makes it the active version.
+
+```
+POST https://api.davazmysel.com/gateway-pages
+Content-Type: multipart/form-data
+```
+
+### Request Fields
+
+<ParamField body="domain_id" type="string" required>
+  The UUID of the domain to upload files to. The domain must be in `hosted_pages` mode.
+</ParamField>
+
+<ParamField body="files" type="file" required>
+  One or more files to upload. You can include multiple `files` fields in the same multipart request.
+
+  - **Max size per file:** 100 MB
+  - **Supported types:** `.html`, `.css`, `.js`, `.json`, `.jpg`, `.png`, `.gif`, `.svg`, `.webp`, `.ttf`, `.otf`, `.woff`, `.woff2`, `.mp4`, `.webm`
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/gateway-pages \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "domain_id=d123abc" \
+  -F "files=@index.html" \
+  -F "files=@style.css" \
+  -F "files=@script.js"
+```
+
+### Example Response
+
+Returns `201 Created`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "version_id": "v789ghi",
+    "domain_id": "d123abc",
+    "file_count": 3,
+    "total_size": 28540,
+    "created_at": "2024-01-15T10:00:00Z",
+    "files": [
+      { "path": "/index.html", "size": 12345, "type": "text/html" },
+      { "path": "/style.css",  "size": 3075,  "type": "text/css"  },
+      { "path": "/script.js",  "size": 13120, "type": "application/javascript" }
+    ]
+  }
+}
+```
+
+<ResponseField name="data.version_id" type="string">
+  The unique identifier for this upload version. Store it if you need to roll back to this version later.
+</ResponseField>
+
+<ResponseField name="data.files" type="array">
+  List of files included in this version, with their served path, byte size, and MIME type.
+</ResponseField>
+
+---
+
+## List Current Files
+
+Retrieve the files in the currently active version for a domain.
+
+```
+GET https://api.davazmysel.com/gateway-pages?domain_id=DOMAIN_ID
+```
+
+### Example Request
+
+```bash
+curl "https://api.davazmysel.com/gateway-pages?domain_id=d123abc" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "version_id": "v789ghi",
+    "files": [
+      { "path": "/index.html", "size": 12345, "type": "text/html",  "uploaded_at": "2024-01-15T10:00:00Z" },
+      { "path": "/style.css",  "size": 3075,  "type": "text/css",   "uploaded_at": "2024-01-15T10:00:00Z" }
+    ]
+  }
+}
+```
+
+---
+
+## List Versions
+
+Retrieve the full upload history for a domain, newest first. Use this to find the `version_id` you want to roll back to.
+
+```
+GET https://api.davazmysel.com/gateway-pages/versions?domain_id=DOMAIN_ID
+```
+
+### Example Request
+
+```bash
+curl "https://api.davazmysel.com/gateway-pages/versions?domain_id=d123abc" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "version_id": "v789ghi",
+      "domain_id": "d123abc",
+      "file_count": 3,
+      "total_size": 28540,
+      "is_active": true,
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    {
+      "version_id": "v456def",
+      "domain_id": "d123abc",
+      "file_count": 2,
+      "total_size": 15420,
+      "is_active": false,
+      "created_at": "2024-01-14T09:00:00Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 2 }
+}
+```
+
+<ResponseField name="data[].is_active" type="boolean">
+  `true` for the version currently being served. Only one version is active at a time.
+</ResponseField>
+
+---
+
+## Roll Back to a Version
+
+Make a previous version the active version immediately. All visitors to the domain begin receiving the rolled-back version the moment the request completes.
+
+```
+POST https://api.davazmysel.com/gateway-pages/versions/:id/rollback
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the version to restore as the active version.
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/gateway-pages/versions/v456def/rollback \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "version_id": "v456def",
+    "is_active": true,
+    "previous_active": "v789ghi"
+  }
+}
+```
+
+<Note>
+  Rolling back replaces all currently served files with the files from the selected version. The previous active version is not deleted — it remains in your version history and can be restored again at any time.
+</Note>
+
+<Tip>
+  Use version history to safely test new page designs: upload the new version, preview it with the Test URL tool, and roll back immediately if anything looks wrong — no re-upload required.
+</Tip>

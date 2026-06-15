@@ -1,0 +1,89 @@
+---
+title: "Dáva Webhook Receivers: Shopify, Stripe, HubSpot and More"
+sidebarTitle: "Webhooks"
+description: "Connect Shopify, Stripe, HubSpot, and more to Dáva so purchases and conversions are automatically recorded in your funnel — no custom code required."
+---
+
+Connect your e-commerce, CRM, or email platform to Dáva so purchases and conversions are automatically recorded in your funnel. Webhook receivers capture backend events — like a completed Shopify order or a Stripe payment — without requiring a tracking snippet on that page.
+
+## Supported platforms
+
+<CardGroup cols={3}>
+  <Card title="Shopify" icon="bag-shopping" href="/integrations/shopify">
+    Record order-paid events as conversions with revenue data.
+  </Card>
+  <Card title="Stripe" icon="credit-card" href="/integrations/stripe">
+    Capture payment-succeeded and subscription-created events.
+  </Card>
+  <Card title="HubSpot" icon="handshake" href="/integrations/other-platforms">
+    Fire a conversion when a deal moves to closed-won.
+  </Card>
+  <Card title="ActiveCampaign" icon="envelope" href="/integrations/other-platforms">
+    Record campaign-sent events for send-side funnel reporting.
+  </Card>
+  <Card title="Mailchimp" icon="envelope-open" href="/integrations/other-platforms">
+    Capture campaign-sent events as funnel signals.
+  </Card>
+  <Card title="Klaviyo" icon="chart-mixed" href="/integrations/other-platforms">
+    Record order-placed events as conversions.
+  </Card>
+  <Card title="Zapier" icon="bolt" href="/integrations/other-platforms">
+    Use Zapier as a catch-all bridge for any unsupported platform.
+  </Card>
+</CardGroup>
+
+## How webhook receivers work
+
+Each receiver has a unique endpoint URL and a secret. When your platform sends an event to that URL, Dáva verifies the signature (or token), matches the person to an existing identity in your identity graph — using their hashed email address or an external ID from the payload — and records a conversion event against the originating campaign.
+
+## Creating a webhook receiver
+
+<Steps>
+  <Step title="Open Webhooks in your dashboard">
+    Go to **Domains** → your domain → **Funnel Config** → **Webhooks** → **Add Receiver**.
+  </Step>
+  <Step title="Choose a platform">
+    Select the platform that will send the webhook (for example, Shopify or Stripe).
+  </Step>
+  <Step title="Copy the endpoint URL">
+    Dáva generates a unique endpoint URL for this receiver, for example:
+
+    ```
+    https://api.davazmysel.com/hooks/shopify/order-paid
+    ```
+
+    Copy it — you'll paste it into your platform's webhook settings.
+  </Step>
+  <Step title="Copy the one-time secret">
+    Dáva displays the signing secret once. Copy it and store it securely before closing the dialog.
+  </Step>
+  <Step title="Configure your platform">
+    Paste the endpoint URL and secret into your platform's webhook settings. The exact steps vary by platform — see the platform-specific pages linked above.
+  </Step>
+</Steps>
+
+<Warning>
+  The secret is shown only once at creation time. If you lose it, use the **Rotate secret** action to generate a new one — but you must then update your platform's webhook configuration immediately, because the old secret stops working instantly.
+</Warning>
+
+## Managing receivers
+
+From **Funnel Config** → **Webhooks** you can:
+
+- **Disable / re-enable** a receiver without removing it from your platform configuration.
+- **Rotate the secret** to generate a new signing secret. The old secret is revoked immediately — update your platform right away.
+- **Revoke** a receiver to soft-delete it. Revoked receivers stop accepting events and can be removed from your platform's webhook settings.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can I have multiple receivers for the same platform?">
+    Yes. You can create as many receivers as you need for a given platform — for example, one per Shopify store if you operate multiple storefronts. Each receiver gets its own endpoint URL and secret.
+  </Accordion>
+  <Accordion title="What happens if webhook delivery fails?">
+    If an event is not processed correctly, open the **Funnel events** log in the dashboard to inspect the raw payload and any processing errors. Most platforms will retry delivery automatically if your receiver is temporarily unreachable — check your platform's webhook delivery log for failed attempts and their response codes.
+  </Accordion>
+  <Accordion title="How does Dáva match a webhook event to a visitor?">
+    Dáva uses your identity graph to match the incoming event. It looks for a hashed email address or external ID in the event payload and cross-references it with identities captured by the tracking snippet (for example, from a form submission earlier in the session). If a match is found, the conversion is attributed to that visitor's originating campaign.
+  </Accordion>
+</AccordionGroup>

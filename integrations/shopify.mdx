@@ -1,0 +1,66 @@
+---
+title: "Shopify Integration: Record Orders as Dáva Conversions"
+sidebarTitle: "Shopify"
+description: "Connect your Shopify store to Dáva so every order-paid event is recorded as a conversion, complete with revenue data for CPA and ROAS reporting."
+---
+
+Record Shopify order-paid events as conversion signals in Dáva. Once connected, every completed purchase in your store is attributed to the marketing campaign that drove it — giving you accurate revenue and CPA data without touching your storefront code.
+
+## Endpoint
+
+```
+POST https://api.davazmysel.com/hooks/shopify/order-paid
+```
+
+## Setup
+
+<Steps>
+  <Step title="Create a webhook receiver in Dáva">
+    Go to **Domains** → your domain → **Funnel Config** → **Webhooks** → **Add Receiver**, then choose **Shopify**.
+
+    Dáva generates a unique endpoint URL and a signing secret for this receiver.
+  </Step>
+  <Step title="Copy the endpoint URL and secret">
+    Copy both values before closing the dialog. The secret is shown only once.
+  </Step>
+  <Step title="Open Shopify webhook settings">
+    In your Shopify Admin, go to **Settings** → **Notifications** → **Webhooks** → **Create webhook**.
+  </Step>
+  <Step title="Configure the webhook">
+    Set the following values in Shopify:
+
+    - **Topic:** Order payment
+    - **URL:** the Dáva endpoint URL you copied (`https://api.davazmysel.com/hooks/shopify/order-paid`)
+    - **Format:** JSON
+  </Step>
+  <Step title="Enter the signing secret">
+    Paste your Dáva webhook secret into the **HMAC secret** field in Shopify. This allows Dáva to verify that the event came from Shopify and not a third party.
+  </Step>
+</Steps>
+
+## Signature verification
+
+<Note>
+  Dáva verifies every incoming Shopify webhook using HMAC-SHA256. The signature is computed over the raw request body using your signing secret and checked against the `X-Shopify-Hmac-Sha256` header. Requests with invalid or missing signatures are rejected with HTTP 401 and are not recorded.
+</Note>
+
+## What Dáva records
+
+When Shopify delivers an `orders/paid` event, Dáva:
+
+1. Extracts the customer's email address from the payload and hashes it for identity lookup.
+2. Matches the hashed email against your identity graph to find the originating campaign.
+3. Records a **conversion** event with the order value and currency.
+
+Revenue data is stored alongside the conversion so your funnel reports show CPA and total attributed revenue — not just conversion counts.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title='"Webhook signature verification failed"'>
+    This means the HMAC secret configured in Shopify does not match the one Dáva generated for this receiver. Open the receiver in **Funnel Config** → **Webhooks**, rotate the secret to generate a new one, then update the HMAC secret field in Shopify immediately.
+  </Accordion>
+  <Accordion title='"No conversion recorded after an order"'>
+    The most common cause is that the customer's email does not yet exist in your Dáva identity graph. This happens when the tracking snippet is not installed on your store's checkout pages, so no identity was captured before the order fired. Install the Dáva snippet in your Shopify theme so it loads on checkout and thank-you pages, or pass the `contact_id` from your email platform through the checkout flow as hidden metadata.
+  </Accordion>
+</AccordionGroup>

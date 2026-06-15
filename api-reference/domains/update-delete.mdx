@@ -1,0 +1,108 @@
+---
+title: "Update and Delete Domains via the Dáva API"
+sidebarTitle: "Update & Delete"
+description: "Change a domain's destination URL or operating mode with PATCH /domains/:id, or remove a domain entirely with DELETE /domains/:id."
+---
+
+Update a domain's destination or settings when your infrastructure changes, or delete a domain that is no longer in use. Both operations act on the domain's UUID — retrieve it from the [List Domains](/api-reference/domains/list-create) endpoint if you don't have it to hand.
+
+## Update a Domain
+
+Change the destination host, operating mode, or name for an existing domain. All fields are optional — send only the fields you want to change.
+
+```
+PATCH https://api.davazmysel.com/domains/:id
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the domain to update (e.g. `d123abc`).
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string">
+  A new subdomain name for the domain.
+</ParamField>
+
+<ParamField body="destination_host" type="string">
+  The new destination host URL. Traffic will redirect to this host after the update takes effect. Must begin with `https://`.
+</ParamField>
+
+<ParamField body="mode" type="string">
+  The new operating mode for the domain. Accepted values: `simple_redirect`, `structured_passthrough`, `manual_mappings`, `hosted_pages`.
+
+  <Note>
+    Changing `mode` is only supported before the domain has received traffic. Contact support if you need to change the mode on a live domain.
+  </Note>
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X PATCH https://api.davazmysel.com/domains/d123abc \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination_host": "https://new-destination.yourdomain.com.au"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "d123abc",
+    "name": "go",
+    "subdomain": "go",
+    "destination_host": "https://new-destination.yourdomain.com.au",
+    "mode": "simple_redirect",
+    "status": "active",
+    "created_at": "2024-01-10T09:00:00Z"
+  }
+}
+```
+
+The response returns the full updated domain object. Verify the fields you changed are reflected before proceeding.
+
+---
+
+## Delete a Domain
+
+Remove a domain from your account. The domain stops handling redirects immediately, but Dáva retains redirect hit history for 30 days before permanently erasing it.
+
+```
+DELETE https://api.davazmysel.com/domains/:id
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the domain to delete.
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X DELETE https://api.davazmysel.com/domains/d123abc \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "d123abc",
+    "deleted": true
+  }
+}
+```
+
+<Warning>
+  Deleting a domain removes its configuration immediately and stops all redirects. Any live links pointing to this subdomain will stop working at once. Redirect hit history is retained for 30 days and then permanently deleted — export any analytics you need before deleting the domain.
+</Warning>

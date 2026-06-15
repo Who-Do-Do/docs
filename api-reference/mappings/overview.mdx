@@ -1,0 +1,292 @@
+---
+title: "Managing URL Mappings via the Dáva API"
+sidebarTitle: "Mappings"
+description: "Create, list, update, and delete URL-to-destination mappings for Manual Mappings mode domains using the Dáva Mappings API."
+---
+
+The Mappings API manages URL routing rules for domains running in **Manual Mappings** mode. Each mapping defines an inbound path — either an exact URL or a glob pattern — and the destination it should redirect to, along with optional attribution metadata. Use the API to automate mapping creation from your own campaign management tooling or CMS.
+
+## List Mappings
+
+Retrieve all mappings for a domain.
+
+```
+GET https://api.davazmysel.com/mappings?domain_id=DOMAIN_ID
+```
+
+### Query Parameters
+
+<ParamField query="domain_id" type="string" required>
+  The UUID of the domain whose mappings you want to list.
+</ParamField>
+
+<ParamField query="page" type="integer" default="1">
+  Page number to retrieve.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Number of mappings per page. Maximum `100`.
+</ParamField>
+
+### Example Request
+
+```bash
+curl "https://api.davazmysel.com/mappings?domain_id=d123abc" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "m456def",
+      "domain_id": "d123abc",
+      "source_path": "/spring-sale",
+      "destination_url": "https://quote.yourdomain.com.au/offer",
+      "is_pattern": false,
+      "pattern_type": "exact",
+      "attribution": {
+        "source": "email",
+        "medium": "newsletter",
+        "campaign": "spring-sale"
+      },
+      "created_at": "2024-01-10T09:00:00Z"
+    },
+    {
+      "id": "m789ghi",
+      "domain_id": "d123abc",
+      "source_path": "/campaign/**",
+      "destination_url": "https://quote.yourdomain.com.au/",
+      "is_pattern": true,
+      "pattern_type": "glob",
+      "attribution": null,
+      "created_at": "2024-01-11T11:00:00Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 2 }
+}
+```
+
+---
+
+## Create a Mapping
+
+Add a new URL mapping to a domain.
+
+```
+POST https://api.davazmysel.com/mappings
+```
+
+### Request Body
+
+<ParamField body="domain_id" type="string" required>
+  The UUID of the domain this mapping belongs to.
+</ParamField>
+
+<ParamField body="source_path" type="string" required>
+  The inbound path to match. Use an exact path (e.g. `/spring-sale`) or a glob pattern (e.g. `/campaign/**`). Paths must begin with `/`.
+</ParamField>
+
+<ParamField body="destination_url" type="string" required>
+  The full destination URL to redirect matched traffic to. Supports the `{path}` placeholder to forward the captured path segment (e.g. `https://quote.yourdomain.com.au{path}`).
+</ParamField>
+
+<ParamField body="is_pattern" type="boolean">
+  Set to `true` when `source_path` contains a glob pattern. Defaults to `false` (exact match).
+</ParamField>
+
+<ParamField body="pattern_type" type="string">
+  The matching strategy for `source_path`. Accepted values: `exact` (default), `glob`.
+</ParamField>
+
+<ParamField body="attribution" type="object">
+  UTM attribution values to attach to redirected traffic when the mapping is matched.
+
+  <Expandable title="Attribution fields">
+    <ParamField body="attribution.source" type="string">
+      The traffic source (e.g. `email`, `google`, `facebook`).
+    </ParamField>
+    <ParamField body="attribution.medium" type="string">
+      The marketing medium (e.g. `newsletter`, `cpc`, `organic`).
+    </ParamField>
+    <ParamField body="attribution.campaign" type="string">
+      The campaign name or identifier.
+    </ParamField>
+    <ParamField body="attribution.content" type="string">
+      Used to differentiate ads or links pointing to the same URL.
+    </ParamField>
+    <ParamField body="attribution.term" type="string">
+      Identifies paid search keywords.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Example — Exact Path
+
+```bash
+curl -X POST https://api.davazmysel.com/mappings \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain_id": "d123abc",
+    "source_path": "/spring-sale",
+    "destination_url": "https://quote.yourdomain.com.au/offer",
+    "is_pattern": false,
+    "pattern_type": "exact",
+    "attribution": {
+      "source": "email",
+      "medium": "newsletter",
+      "campaign": "spring-sale"
+    }
+  }'
+```
+
+### Example — Glob Pattern
+
+```bash
+curl -X POST https://api.davazmysel.com/mappings \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain_id": "d123abc",
+    "source_path": "/campaign/**",
+    "destination_url": "https://quote.yourdomain.com.au/{path}",
+    "is_pattern": true,
+    "pattern_type": "glob"
+  }'
+```
+
+### Response
+
+Returns `201 Created`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "m456def",
+    "domain_id": "d123abc",
+    "source_path": "/spring-sale",
+    "destination_url": "https://quote.yourdomain.com.au/offer",
+    "is_pattern": false,
+    "pattern_type": "exact",
+    "attribution": { "source": "email", "medium": "newsletter", "campaign": "spring-sale" },
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+---
+
+## Update a Mapping
+
+Change the destination, source path, or attribution for an existing mapping. All fields are optional.
+
+```
+PATCH https://api.davazmysel.com/mappings/:id
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the mapping to update.
+</ParamField>
+
+### Request Body
+
+<ParamField body="source_path" type="string">
+  New inbound path to match.
+</ParamField>
+
+<ParamField body="destination_url" type="string">
+  New redirect destination URL.
+</ParamField>
+
+<ParamField body="attribution" type="object">
+  Updated attribution values. Provided fields are merged with the existing attribution object — omitted fields are left unchanged.
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X PATCH https://api.davazmysel.com/mappings/m456def \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "destination_url": "https://quote.yourdomain.com.au/spring-v2",
+    "attribution": { "campaign": "spring-sale-v2" }
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "m456def",
+    "domain_id": "d123abc",
+    "source_path": "/spring-sale",
+    "destination_url": "https://quote.yourdomain.com.au/spring-v2",
+    "is_pattern": false,
+    "pattern_type": "exact",
+    "attribution": { "source": "email", "medium": "newsletter", "campaign": "spring-sale-v2" },
+    "created_at": "2024-01-10T09:00:00Z"
+  }
+}
+```
+
+---
+
+## Delete a Mapping
+
+Soft-delete a mapping. Deleted mappings stop matching traffic immediately but can be restored within 30 days. After 30 days the mapping is permanently erased.
+
+```
+DELETE https://api.davazmysel.com/mappings/:id
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The UUID of the mapping to delete.
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X DELETE https://api.davazmysel.com/mappings/m456def \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "m456def",
+    "deleted": true
+  }
+}
+```
+
+---
+
+## Glob Pattern Syntax
+
+Use glob patterns when a single mapping needs to match a range of paths. The table below covers the most common patterns.
+
+| Pattern             | Matches                                                     |
+| ------------------- | ----------------------------------------------------------- |
+| `/campaign/**`      | Any path that starts with `/campaign/`, at any depth        |
+| `/ref/{brand}/**`   | Captures the `brand` path segment; matches anything after   |
+| `/spring-*`         | Any path starting with `/spring-` (single segment only)     |
+| `/offers/*/details` | Any single-segment wildcard between `/offers/` and `/details` |
+
+<Tip>
+  Exact mappings take precedence over glob mappings when both could match the same path. Define exact mappings first for high-priority paths, then use glob patterns as catch-alls for the rest of the campaign structure.
+</Tip>

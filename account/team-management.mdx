@@ -1,0 +1,85 @@
+---
+title: "Team Management in Dáva: Roles & Invitations"
+sidebarTitle: "Team"
+description: "Invite teammates to your Dáva account, assign roles that control what each person can do, and manage or remove members at any time."
+---
+
+Dáva lets you invite teammates to your account so you can collaborate on redirect management and analytics. Each member is assigned a role — Owner, Admin, or Member — that determines which actions they can take. You control who has access, and you can update or revoke that access at any time.
+
+## Roles and permissions
+
+Every account has exactly one Owner. Owners can delegate administrative work to Admins, and give read-only access to Members.
+
+| Permission | Owner | Admin | Member |
+|---|:---:|:---:|:---:|
+| Invite members | ✓ | ✓ | — |
+| Manage domains | ✓ | ✓ | — |
+| View analytics | ✓ | ✓ | ✓ |
+| Change billing | ✓ | — | — |
+| Transfer ownership | ✓ | — | — |
+
+## Inviting a member
+
+<Steps>
+  <Step title="Open Team settings">
+    Navigate to **Settings → Team**.
+  </Step>
+  <Step title="Click Invite Member">
+    Select **Invite Member** to open the invitation form.
+  </Step>
+  <Step title="Enter the invitee's email">
+    Type the email address of the person you want to invite.
+  </Step>
+  <Step title="Select a role">
+    Choose **Admin** or **Member** from the role dropdown. You cannot invite another Owner.
+  </Step>
+  <Step title="Send the invitation">
+    Click **Send Invite**. The invitee receives an email containing a secure link to accept the invitation and join your account.
+  </Step>
+</Steps>
+
+## Managing pending invitations
+
+Invitations that have not yet been accepted appear under **Settings → Team → Pending Invitations**. You can see who was invited, when, and which role they were assigned.
+
+To cancel an invitation before it is accepted, click the **×** next to the pending invite. The invitation link is immediately invalidated, and the invitee cannot join using it.
+
+## Changing a member's role
+
+Only the **Owner** can change an existing member's role.
+
+Go to **Settings → Team**, click the member whose role you want to update, select the new role from the dropdown, and confirm. The change takes effect immediately.
+
+## Removing a member
+
+Owners and Admins can remove members from the account.
+
+Go to **Settings → Team**, click the member you want to remove, and select **Remove Member**. The member loses access immediately — they cannot view any dashboards, analytics, or settings.
+
+<Note>
+  Removing a member does not delete any data they created or modified. Their contributions (redirects, events, notes) remain in the account.
+</Note>
+
+## Transferring ownership
+
+Only the current Owner can transfer ownership to another member of the account.
+
+Go to **Settings → Team**, click the member you want to make the new Owner, and select **Transfer Ownership**.
+
+<Warning>
+  Transferring ownership gives the new Owner complete control of the account, including billing and the ability to remove you. You will automatically become an Admin after the transfer. **This action cannot be undone.** Make sure you trust the person you are transferring ownership to before confirming.
+</Warning>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can I have multiple owners?">
+    No. Each Dáva account has exactly one Owner at a time. To make someone else the Owner, you must use the **Transfer Ownership** action, which moves the Owner role to them and downgrades you to Admin.
+  </Accordion>
+  <Accordion title="What happens to data when I remove a member?">
+    Removing a member revokes their access immediately, but does not delete any data. All redirects, analytics events, and settings they interacted with remain in your account untouched.
+  </Accordion>
+  <Accordion title="Can a member see billing information?">
+    No. Only the Owner can access the Billing section. Admins and Members cannot view plan details, invoices, or payment methods.
+  </Accordion>
+</AccordionGroup>

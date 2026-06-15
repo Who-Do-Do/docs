@@ -1,0 +1,165 @@
+---
+title: "List and Create Domains via the Dáva API"
+sidebarTitle: "List & Create"
+description: "Retrieve all domains on your Dáva account and create new ones programmatically using GET and POST /domains."
+---
+
+Manage your Dáva domains programmatically — list existing domains to inspect their configuration and status, or create new ones without leaving your deployment pipeline. Both endpoints use the same Bearer API key you use for event ingestion.
+
+## List Domains
+
+Retrieve a paginated list of all domains on your account.
+
+```
+GET https://api.davazmysel.com/domains
+```
+
+### Query Parameters
+
+<ParamField query="page" type="integer" default="1">
+  Page number to retrieve.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Number of domains per page. Maximum `100`.
+</ParamField>
+
+### Example Request
+
+```bash
+curl https://api.davazmysel.com/domains?page=1&limit=20 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "d123abc",
+      "name": "go",
+      "subdomain": "go",
+      "destination_host": "https://www.yourdomain.com.au",
+      "mode": "simple_redirect",
+      "status": "active",
+      "created_at": "2024-01-10T09:00:00Z"
+    },
+    {
+      "id": "d456def",
+      "name": "lp",
+      "subdomain": "lp",
+      "destination_host": "https://pages.yourdomain.com.au",
+      "mode": "hosted_pages",
+      "status": "verifying",
+      "created_at": "2024-01-12T14:30:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 2
+  }
+}
+```
+
+<ResponseField name="data[].id" type="string">
+  Unique UUID for the domain. Use this in subsequent API calls to reference the domain.
+</ResponseField>
+
+<ResponseField name="data[].name" type="string">
+  The subdomain name (e.g. `go` for `go.yourdomain.com.au`).
+</ResponseField>
+
+<ResponseField name="data[].subdomain" type="string">
+  The subdomain label component of the full hostname.
+</ResponseField>
+
+<ResponseField name="data[].destination_host" type="string">
+  The destination host URL that traffic is redirected to.
+</ResponseField>
+
+<ResponseField name="data[].mode" type="string">
+  The operating mode for this domain. One of `simple_redirect`, `structured_passthrough`, `manual_mappings`, or `hosted_pages`.
+</ResponseField>
+
+<ResponseField name="data[].status" type="string">
+  Current domain status. One of `pending`, `verifying`, or `active`.
+</ResponseField>
+
+<ResponseField name="data[].created_at" type="string">
+  ISO 8601 timestamp of when the domain was created.
+</ResponseField>
+
+---
+
+## Create a Domain
+
+Create a new domain on your account. After creation, add a DNS CNAME record to verify ownership before the domain begins handling traffic.
+
+```
+POST https://api.davazmysel.com/domains
+```
+
+<Note>
+  Domain creation is rate-limited to **10 requests per hour** per account.
+</Note>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  The subdomain name — for example, `go` to create `go.yourdomain.com.au`. Alphanumeric characters and hyphens only; maximum 63 characters.
+</ParamField>
+
+<ParamField body="destination_host" type="string" required>
+  The full destination host URL that traffic will be redirected to (e.g. `https://www.yourdomain.com.au`). Must begin with `https://`.
+</ParamField>
+
+<ParamField body="mode" type="string">
+  The operating mode for the domain. Defaults to `simple_redirect` if omitted. Accepted values:
+
+  - `simple_redirect` — pass all traffic to the destination, preserving path and query string
+  - `structured_passthrough` — extract UTMs from a structured URL path
+  - `manual_mappings` — route specific paths to different destinations via the Mappings API
+  - `hosted_pages` — serve uploaded HTML files from the domain
+</ParamField>
+
+### Example Request
+
+```bash
+curl -X POST https://api.davazmysel.com/domains \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "go",
+    "destination_host": "https://www.yourdomain.com.au",
+    "mode": "simple_redirect"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "d123abc",
+    "name": "go",
+    "subdomain": "go",
+    "destination_host": "https://www.yourdomain.com.au",
+    "mode": "simple_redirect",
+    "status": "pending",
+    "cname_target": "client.davazmysel.com",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+<ResponseField name="data.cname_target" type="string">
+  The CNAME value to configure in your DNS provider. Point your subdomain at this hostname to complete domain verification.
+</ResponseField>
+
+<Note>
+  After creating a domain, add a CNAME record in your DNS provider pointing the subdomain to `client.davazmysel.com`. DNS verification runs automatically in the background — use the [DNS Verification endpoint](/api-reference/domains/dns-verification) to check status or trigger a manual re-check.
+</Note>
